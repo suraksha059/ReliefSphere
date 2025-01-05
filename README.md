@@ -150,6 +150,9 @@ MIT Licens - feel free to copy, steal, modify, or frame it on your wall!
 
 Thanks to coffe ☕️, Stack Overflow 🚀, and that one YouTube tutorial that finally made sense.
 
-Made with ❤️ and probably to much caffeine in Flutter
+P.S. If this starter kit saved you hours of setup, consider:
+- Giving the repo a ⭐️
+- Sharing it with other Flutter devs 🫂
+- Contributing back to the project 🤝
 
-\_P.S. If this starter kit saves you time, you owe the developer a virtual hig five!
+Made with ❤️ and probably too much ☕️
