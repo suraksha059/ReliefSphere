@@ -1,9 +1,10 @@
 import 'package:flutter/widgets.dart';
+import 'package:relief_sphere/app/enum/enum.dart';
 import 'package:relief_sphere/core/apis/auth_api.dart';
 
 import 'auth_state.dart';
 
-class AuthNotifiers extends ChangeNotifier {
+class AuthNotifier extends ChangeNotifier {
   final AuthApi _authApi = AuthApi();
 
   AuthState _state = const AuthState();
@@ -20,9 +21,14 @@ class AuthNotifiers extends ChangeNotifier {
     _updateState(isLoading: false, isLoggedIn: false);
   }
 
-  void register(String email, String password) {
+  void register(
+      {required String name, required String email, required String password}) {
     _updateState(isLoading: true);
-    _authApi.register(email, password);
+    _authApi.register(
+      name: name,
+      email: email,
+      password: password,
+    );
     _updateState(isLoading: false, isLoggedIn: true);
   }
 
@@ -37,5 +43,12 @@ class AuthNotifiers extends ChangeNotifier {
       isLoggedIn: isLoggedIn,
     );
     notifyListeners();
+  }
+
+  void socialLogin(SocialLoginType type) {
+    _updateState(isLoading: true);
+    _authApi.socialLogin(type);
+    _updateState(isLoading: false, isLoggedIn: true);
+    
   }
 }

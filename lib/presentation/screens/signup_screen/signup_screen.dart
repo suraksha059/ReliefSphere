@@ -1,29 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:relief_sphere/app/config/size_config.dart';
 import 'package:relief_sphere/app/const/app_assets.dart';
-import 'package:relief_sphere/app/enum/enum.dart';
-import 'package:relief_sphere/app/routes/app_routes.dart';
 import 'package:relief_sphere/presentation/widgets/loading_overlay.dart';
 
-import '../../../app/config/size_config.dart';
 import '../../../core/notifiers/auth/auth_notifiers.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
-import 'widgets/social_login_button.dart';
+import '../login_screen/widgets/social_login_button.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class SignupScreen extends StatefulWidget {
+  const SignupScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _acceptedTerms = false;
 
   @override
   Widget build(BuildContext context) {
@@ -42,10 +41,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Hero(tag: 'app_logo', child: Image.asset(AppAssets.logo)),
                       const SizedBox(height: 32),
+
+                      Hero(
+                        tag: 'app_logo',
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          height: 100,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
                       Text(
-                        'Welcome to ReliefSphere',
+                        'Create Account',
                         style: Theme.of(context)
                             .textTheme
                             .headlineMedium
@@ -57,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Login to help or receive aid',
+                        'Join ReliefSphere to make a difference',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                               color: colorScheme.onSurfaceVariant,
                             ),
@@ -65,13 +72,24 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 32),
 
-                      // Email & Password Fields
+                      // Input Fields
                       PrimaryTextField(
+                        keyboardType: TextInputType.name,
+                        autofillHints: const [AutofillHints.name],
+                        label: 'Full Name',
+                        controller: _nameController,
+                        prefixIcon: Icons.person_outline,
+                        validator: (value) => value?.isEmpty ?? true
+                            ? 'Please enter your name'
+                            : null,
+                      ),
+                      const SizedBox(height: 16),
+                      PrimaryTextField(
+                        keyboardType: TextInputType.emailAddress,
+                        autofillHints: const [AutofillHints.email],
                         label: 'Email',
                         controller: _emailController,
                         prefixIcon: Icons.email_outlined,
-                        keyboardType: TextInputType.emailAddress,
-                        autofillHints: const [AutofillHints.email],
                         validator: (value) {
                           if (value?.isEmpty ?? true) {
                             return 'Please enter your email';
@@ -80,23 +98,21 @@ class _LoginScreenState extends State<LoginScreen> {
                           if (!value!.contains('@')) {
                             return 'Please enter a valid email';
                           }
-
                           return null;
                         },
                       ),
                       const SizedBox(height: 16),
                       PrimaryTextField(
+                        keyboardType: TextInputType.visiblePassword,
+                        autofillHints: const [AutofillHints.newPassword],
                         label: 'Password',
                         controller: _passwordController,
-                        keyboardType: TextInputType.visiblePassword,
-                        autofillHints: const [AutofillHints.password],
                         isObscure: true,
                         prefixIcon: Icons.lock_outline,
                         validator: (value) {
                           if (value?.isEmpty ?? true) {
                             return 'Please enter your password';
                           }
-
                           if (value!.length < 6) {
                             return 'Password must be at least 6 characters';
                           }
@@ -104,29 +120,48 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                       ),
 
-                      // Forgot Password
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {
-                            // Navigate to forgot password
-                          },
-                          child: Text(
-                            'Forgot Password?',
-                            style: TextStyle(color: colorScheme.primary),
+                      // Terms and Conditions
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: _acceptedTerms,
+                            onChanged: (value) =>
+                                setState(() => _acceptedTerms = value!),
                           ),
+                          Expanded(
+                            child: Text.rich(
+                              TextSpan(
+                                text: 'I agree to the ',
+                                children: [
+                                  TextSpan(
+                                    text: 'Terms & Conditions',
+                                    style: TextStyle(
+                                      color: colorScheme.primary,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              style: TextStyle(
+                                  color: colorScheme.onSurfaceVariant),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // Signup Button
+                      const SizedBox(height: 24),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: CustomButton(
+                          text: 'Sign Up',
+                          onPressed: _handleSignup,
+                          isLoading: notifier.isLoading,
                         ),
                       ),
 
-                      // Login Button
-                      const SizedBox(height: 24),
-                      CustomButton(
-                        text: 'Login',
-                        onPressed: _handleLogin,
-                        isLoading: notifier.isLoading,
-                      ),
-
-                      // Social Login Divider
+                      // Social Signup
                       const SizedBox(height: 24),
                       Row(
                         children: [
@@ -134,7 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
-                              'Or continue with',
+                              'Or sign up with',
                               style: TextStyle(
                                   color: colorScheme.onSurfaceVariant),
                             ),
@@ -143,7 +178,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
 
-                      // Social Login Buttons
                       const SizedBox(height: 24),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -152,7 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             platformName: 'Google',
                             icon: AppAssets.googleLogo,
                             onPressed: () {
-                              notifier.socialLogin(SocialLoginType.google);
+                              // Handle Google signup
                             },
                           ),
                           SizedBox(width: SizeConfig.blockSizeHorizontal * 4),
@@ -160,28 +194,26 @@ class _LoginScreenState extends State<LoginScreen> {
                             platformName: 'Facebook',
                             icon: AppAssets.facebookLogo,
                             onPressed: () {
-                              notifier.socialLogin(SocialLoginType.facebook);
+                              // Handle Facebook signup
                             },
                           ),
                         ],
                       ),
 
-                      // Sign Up Link
+                      // Login Link
                       const SizedBox(height: 24),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Don\'t have an account? ',
+                            'Already have an account? ',
                             style:
                                 TextStyle(color: colorScheme.onSurfaceVariant),
                           ),
                           TextButton(
-                            onPressed: () {
-                              context.push(AppRoutes.registerScreen);
-                            },
+                            onPressed: () => Navigator.pop(context),
                             child: Text(
-                              'Sign up',
+                              'Login',
                               style: TextStyle(
                                 color: colorScheme.primary,
                                 fontWeight: FontWeight.bold,
@@ -203,17 +235,25 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  void _handleLogin() {
+  void _handleSignup() {
     if (_formKey.currentState?.validate() ?? false) {
       TextInput.finishAutofillContext();
-      context.read<AuthNotifier>().login(
-            _emailController.text,
-            _passwordController.text,
+      if (!_acceptedTerms) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please accept terms & conditions')),
+        );
+        return;
+      }
+      context.read<AuthNotifier>().register(
+            name: _nameController.text,
+            email: _emailController.text,
+            password: _passwordController.text,
           );
     }
   }

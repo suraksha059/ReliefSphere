@@ -14,17 +14,22 @@ class CustomButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: isLoading ? null : onPressed,
-      style: ElevatedButton.styleFrom(
-        minimumSize: const Size(double.infinity, 50),
+    final theme = Theme.of(context);
+    return FilledButton(
+      style: FilledButton.styleFrom(
+        minimumSize: const Size(double.infinity, 56),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
         ),
       ),
-      child: isLoading
-          ? const CircularProgressIndicator()
-          : Text(text, style: const TextStyle(fontSize: 16)),
+      onPressed: onPressed,
+      child: Text(
+        'Sign In',
+        style: theme.textTheme.titleMedium?.copyWith(
+          color: theme.colorScheme.onPrimary,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 }

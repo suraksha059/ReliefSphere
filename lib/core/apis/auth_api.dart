@@ -1,20 +1,20 @@
-import 'package:appwrite/appwrite.dart';
 import 'package:dio/dio.dart';
 import 'package:relief_sphere/app/utils/logger_utils.dart';
-import 'package:uuid/uuid.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../app/enum/enum.dart';
 import '../../app/services/service_locator.dart';
 
 class AuthApi {
-  final Account _account;
-
-  AuthApi() : _account = Account(ServiceLocator.appwrite.client);
+  final SupabaseClient _client = ServiceLocator.supabase.client;
 
   Future<void> login(String email, String password) async {
     try {
-      final session =
-          _account.createEmailPasswordSession(email: email, password: password);
-      logger.i(session);
+      final response = await _client.auth.signInWithPassword(
+        password: password,
+        email: email,
+      );
+      logger.i(response);
     } on DioException catch (error) {
       logger.e(error);
     } catch (error) {
@@ -26,14 +26,25 @@ class AuthApi {
     // Call the logout API
   }
 
-  Future<void> register(String email, String password) async {
+  Future<void> register(
+      {required String name,
+      required String email,
+      required String password}) async {
     try {
-      final response = _account.create(
-          userId: Uuid().v4(), email: email, password: password);
+      final response =
+          await _client.auth.signUp(password: password, email: email);
 
-      logger.i(response);
+      print('User created: $response');
     } catch (error) {
       logger.e(error);
     }
+  }
+
+  Future<void> socialLogin(SocialLoginType type) async {
+    await _client.auth.signInWithOAuth(
+      type == SocialLoginType.google
+          ? OAuthProvider.google
+          : OAuthProvider.facebook,
+    );
   }
 }
