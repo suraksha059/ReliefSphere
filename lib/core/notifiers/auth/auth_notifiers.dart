@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:flutter_starter_kit/core/apis/auth_api.dart';
+import 'package:relief_sphere/core/apis/auth_api.dart';
 
 import 'auth_state.dart';
 

@@ -1,6 +1,6 @@
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_starter_kit/app/const/app_constant.dart';
+import 'package:relief_sphere/app/const/app_constant.dart';
 import 'package:provider/provider.dart';
 
 import 'app/config/size_config.dart';

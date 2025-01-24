@@ -1,4 +1,4 @@
-import 'package:flutter_starter_kit/core/notifiers/auth/auth_notifiers.dart';
+import 'package:relief_sphere/core/notifiers/auth/auth_notifiers.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 

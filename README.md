@@ -16,8 +16,8 @@ A carefully crafted Flutter starter template that save you from the boring setup
 
 ```bash
 # Clone this bad boy
-git clone https://github.com/yourusername/flutter_starter_kit.git
-cd flutter_starter_kit
+git clone https://github.com/yourusername/relief_sphere.git
+cd relief_sphere
 fvm use 3.27.1
 fvm flutter pub get
 ```
@@ -32,8 +32,8 @@ flutter --version
 flutter upgrade
 
 # Clone and setup
-git clone https://github.com/yourusername/flutter_starter_kit.git
-cd flutter_starter_kit
+git clone https://github.com/yourusername/relief_sphere.git
+cd relief_sphere
 flutter pub get
 ```
 
@@ -151,6 +151,7 @@ MIT Licens - feel free to copy, steal, modify, or frame it on your wall!
 Thanks to coffe ☕️, Stack Overflow 🚀, and that one YouTube tutorial that finally made sense.
 
 P.S. If this starter kit saved you hours of setup, consider:
+
 - Giving the repo a ⭐️
 - Sharing it with other Flutter devs 🫂
 - Contributing back to the project 🤝
