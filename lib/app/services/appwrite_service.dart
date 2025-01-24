@@ -1,5 +1,5 @@
 import 'package:appwrite/appwrite.dart';
-import 'package:relief_sphere/app/const/app_constant.dart';
+import 'package:relief_sphere/app/config/env_config.dart';
 
 class AppwriteService {
   static final AppwriteService _instance = AppwriteService._internal();
@@ -9,8 +9,8 @@ class AppwriteService {
 
   AppwriteService._internal() {
     _client = Client()
-        .setEndpoint('${AppConstant.appWriteUrl}/v1')
-        .setProject('679360b8afee26dd8e82')
+        .setEndpoint('${EnvConfig.appwriteUrl}/v1')
+        .setProject(EnvConfig.appwriteProjectId)
         .setSelfSigned(status: true);
   }
 
