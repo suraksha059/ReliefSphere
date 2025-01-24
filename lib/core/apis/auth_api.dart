@@ -1,17 +1,20 @@
+import 'package:appwrite/appwrite.dart';
 import 'package:dio/dio.dart';
 import 'package:relief_sphere/app/utils/logger_utils.dart';
+import 'package:uuid/uuid.dart';
 
-import '../../app/routes/api_routes.dart';
 import '../../app/services/service_locator.dart';
 
 class AuthApi {
-  final _apiClient = ServiceLocator.apiClient;
+  final Account _account;
+
+  AuthApi() : _account = Account(ServiceLocator.appwrite.client);
+
   Future<void> login(String email, String password) async {
     try {
-      _apiClient.post(ApiRoutes.login, data: {
-        'email': email,
-        'password': password,
-      });
+      final session =
+          _account.createEmailPasswordSession(email: email, password: password);
+      logger.i(session);
     } on DioException catch (error) {
       logger.e(error);
     } catch (error) {
@@ -24,6 +27,13 @@ class AuthApi {
   }
 
   Future<void> register(String email, String password) async {
-    // Call the register API
+    try {
+      final response = _account.create(
+          userId: Uuid().v4(), email: email, password: password);
+
+      logger.i(response);
+    } catch (error) {
+      logger.e(error);
+    }
   }
 }
