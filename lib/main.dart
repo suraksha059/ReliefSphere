@@ -1,7 +1,7 @@
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
-import 'package:relief_sphere/app/const/app_constant.dart';
 import 'package:provider/provider.dart';
+import 'package:relief_sphere/app/const/app_constant.dart';
 
 import 'app/config/size_config.dart';
 import 'app/enum/enum.dart';
@@ -29,8 +29,8 @@ class MyApp extends StatelessWidget {
             debugShowCheckedModeBanner: false,
             title: AppConstant.appName,
             routerConfig: router,
-            theme: FlexThemeData.light(scheme: FlexScheme.brandBlue),
-            darkTheme: FlexThemeData.dark(scheme: FlexScheme.brandBlue),
+            theme: FlexThemeData.light(scheme: FlexScheme.green),
+            darkTheme: FlexThemeData.dark(scheme: FlexScheme.green),
             themeMode: switch (themeNotifier.themeMode) {
               AppThemeMode.light => ThemeMode.light,
               AppThemeMode.dark => ThemeMode.dark,
