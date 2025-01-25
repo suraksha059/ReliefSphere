@@ -10,6 +10,9 @@ class UserModel extends Equatable {
   final String email;
   final String? avatar;
 
+  @JsonKey(name: 'user_role', defaultValue: UserRole.victim)
+  final UserRole userRole;
+
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
 
@@ -21,6 +24,7 @@ class UserModel extends Equatable {
     required this.name,
     required this.email,
     this.avatar,
+    required this.userRole,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -29,13 +33,15 @@ class UserModel extends Equatable {
       _$UserModelFromJson(json);
 
   @override
-  List<Object?> get props => [id, name, email, avatar, createdAt, updatedAt];
+  List<Object?> get props =>
+      [id, name, email, avatar, userRole, createdAt, updatedAt];
 
   UserModel copyWith({
     String? id,
     String? name,
     String? email,
     String? avatar,
+    UserRole? userRole,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -44,10 +50,23 @@ class UserModel extends Equatable {
       name: name ?? this.name,
       email: email ?? this.email,
       avatar: avatar ?? this.avatar,
+      userRole: userRole ?? this.userRole,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
   Map<String, dynamic> toJson() => _$UserModelToJson(this);
+}
+
+@JsonEnum()
+enum UserRole {
+  @JsonValue('victim')
+  victim,
+
+  @JsonValue('donor')
+  donor,
+
+  @JsonValue('admin')
+  admin;
 }

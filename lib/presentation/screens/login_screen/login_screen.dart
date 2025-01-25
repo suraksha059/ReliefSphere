@@ -6,11 +6,13 @@ import 'package:relief_sphere/app/const/app_assets.dart';
 import 'package:relief_sphere/app/enum/enum.dart';
 import 'package:relief_sphere/app/routes/app_routes.dart';
 import 'package:relief_sphere/presentation/widgets/loading_overlay.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../app/config/size_config.dart';
 import '../../../core/notifiers/auth/auth_notifiers.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../widgets/dialogs/dialog_utils.dart';
 import 'widgets/social_login_button.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -28,6 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
 
     return Consumer<AuthNotifier>(builder: (context, notifier, child) {
       return LoadingOverlay(
@@ -42,7 +45,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Hero(tag: 'app_logo', child: Image.asset(AppAssets.logo)),
+                      Hero(
+                        tag: 'app_logo',
+                        child: Image.asset(
+                          AppAssets.logo,
+                          height: 100,
+                        ),
+                      ),
                       const SizedBox(height: 32),
                       Text(
                         'Welcome to ReliefSphere',
@@ -122,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 24),
                       CustomButton(
                         text: 'Login',
-                        onPressed: _handleLogin,
+                        onPressed: () => _handleLogin(theme),
                         isLoading: notifier.isLoading,
                       ),
 
@@ -208,13 +217,36 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() {
+  void _handleLogin(ThemeData theme) async {
     if (_formKey.currentState?.validate() ?? false) {
       TextInput.finishAutofillContext();
-      context.read<AuthNotifier>().login(
-            _emailController.text,
-            _passwordController.text,
+      try {
+        await context.read<AuthNotifier>().login(
+              _emailController.text,
+              _passwordController.text,
+            );
+        if (mounted) {
+          context.go(AppRoutes.homeScreen);
+        }
+      } on AuthException catch (e) {
+        if (mounted) {
+          DialogUtils.showFailureDialog(
+            context,
+            theme: theme,
+            title: "Login Failed",
+            message: e.message,
           );
+        }
+      } catch (e) {
+        if (mounted) {
+          DialogUtils.showFailureDialog(
+            context,
+            theme: theme,
+            title: "Signup Failed",
+            message: "Please try again later",
+          );
+        }
+      }
     }
   }
 }

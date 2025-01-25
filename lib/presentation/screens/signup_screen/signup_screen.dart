@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:relief_sphere/app/config/size_config.dart';
 import 'package:relief_sphere/app/const/app_assets.dart';
+import 'package:relief_sphere/app/routes/app_routes.dart';
+import 'package:relief_sphere/presentation/widgets/dialogs/dialog_utils.dart';
 import 'package:relief_sphere/presentation/widgets/loading_overlay.dart';
 
 import '../../../core/notifiers/auth/auth_notifiers.dart';
@@ -27,6 +30,7 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
 
     return Consumer<AuthNotifier>(builder: (context, notifier, child) {
       return LoadingOverlay(
@@ -46,7 +50,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       Hero(
                         tag: 'app_logo',
                         child: Image.asset(
-                          'assets/images/logo.png',
+                          AppAssets.logo,
                           height: 100,
                         ),
                       ),
@@ -120,7 +124,6 @@ class _SignupScreenState extends State<SignupScreen> {
                         },
                       ),
 
-                      // Terms and Conditions
                       const SizedBox(height: 16),
                       Row(
                         children: [
@@ -156,7 +159,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 24),
                         child: CustomButton(
                           text: 'Sign Up',
-                          onPressed: _handleSignup,
+                          onPressed: () => _handleSignup(theme),
                           isLoading: notifier.isLoading,
                         ),
                       ),
@@ -241,7 +244,7 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
-  void _handleSignup() {
+  void _handleSignup(ThemeData theme) async {
     if (_formKey.currentState?.validate() ?? false) {
       TextInput.finishAutofillContext();
       if (!_acceptedTerms) {
@@ -250,11 +253,36 @@ class _SignupScreenState extends State<SignupScreen> {
         );
         return;
       }
-      context.read<AuthNotifier>().register(
-            name: _nameController.text,
-            email: _emailController.text,
-            password: _passwordController.text,
+
+      try {
+        await context.read<AuthNotifier>().register(
+              name: _nameController.text,
+              email: _emailController.text,
+              password: _passwordController.text,
+            );
+
+        if (!mounted) return;
+
+        DialogUtils.showSuccessDialog(
+          context,
+          theme: theme,
+          title: "Signup Successful",
+          message: "You have successfully signed up",
+          buttonText: "Login",
+          onPressed: () {
+            context.go(AppRoutes.loginScreen);
+          },
+        );
+      } catch (e) {
+        if (mounted) {
+          DialogUtils.showFailureDialog(
+            context,
+            theme: theme,
+            title: "Signup Failed",
+            message: "Please try again later",
           );
+        }
+      }
     }
   }
 }

@@ -9,26 +9,45 @@ class AuthNotifier extends ChangeNotifier {
 
   AuthState _state = const AuthState();
   bool get isLoading => _state.isLoading;
-  void login(String email, String password) {
+
+  Future login(String email, String password) async {
     _updateState(isLoading: true);
-    _authApi.login(email, password);
-    _updateState(isLoading: false, isLoggedIn: true);
+    try {
+      await _authApi.login(email, password);
+      _updateState(isLoading: false, isLoggedIn: true);
+    } catch (e) {
+      _updateState(isLoading: false, error: e.toString(), isLoggedIn: false);
+    } finally {
+      _updateState(isLoading: false);
+    }
   }
 
   void logout() {
-    _updateState(isLoading: true);
     _authApi.logout();
-    _updateState(isLoading: false, isLoggedIn: false);
   }
 
-  void register(
-      {required String name, required String email, required String password}) {
+  Future<void> register(
+      {required String name,
+      required String email,
+      required String password}) async {
     _updateState(isLoading: true);
-    _authApi.register(
-      name: name,
-      email: email,
-      password: password,
-    );
+    try {
+      await _authApi.register(
+        name: name,
+        email: email,
+        password: password,
+      );
+      _updateState(isLoading: false, isLoggedIn: true);
+    } catch (e) {
+      _updateState(isLoading: false, error: e.toString());
+    } finally {
+      _updateState(isLoading: false);
+    }
+  }
+
+  void socialLogin(SocialLoginType type) {
+    _updateState(isLoading: true);
+    _authApi.socialLogin(type);
     _updateState(isLoading: false, isLoggedIn: true);
   }
 
@@ -43,12 +62,5 @@ class AuthNotifier extends ChangeNotifier {
       isLoggedIn: isLoggedIn,
     );
     notifyListeners();
-  }
-
-  void socialLogin(SocialLoginType type) {
-    _updateState(isLoading: true);
-    _authApi.socialLogin(type);
-    _updateState(isLoading: false, isLoggedIn: true);
-    
   }
 }

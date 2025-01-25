@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:relief_sphere/app/routes/app_routes.dart';
+import 'package:relief_sphere/core/notifiers/auth/auth_notifiers.dart';
 
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/feature_card.dart';
@@ -68,6 +72,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTap: () {},
                   );
                 },
+              ),
+            ),
+
+            // loggout button
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: ElevatedButton(
+                onPressed: () {
+                  context.read<AuthNotifier>().logout();
+                  context.go(AppRoutes.loginScreen);
+                },
+                child: const Text('Log Out'),
               ),
             ),
           ],

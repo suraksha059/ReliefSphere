@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:relief_sphere/app/utils/logger_utils.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -15,15 +14,16 @@ class AuthApi {
         email: email,
       );
       logger.i(response);
-    } on DioException catch (error) {
+    } on AuthException catch (error) {
       logger.e(error);
+      rethrow;
     } catch (error) {
       logger.e(error);
     }
   }
 
   Future<void> logout() async {
-    // Call the logout API
+    await _client.auth.signOut();
   }
 
   Future<void> register(
@@ -31,12 +31,14 @@ class AuthApi {
       required String email,
       required String password}) async {
     try {
-      final response =
+      final AuthResponse response =
           await _client.auth.signUp(password: password, email: email);
-
-      print('User created: $response');
+      if (response.user == null) {
+        throw Exception('User not created');
+      }
     } catch (error) {
       logger.e(error);
+      throw Exception('User not created');
     }
   }
 
