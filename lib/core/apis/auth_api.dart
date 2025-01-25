@@ -26,10 +26,10 @@ class AuthApi {
     await _client.auth.signOut();
   }
 
-  Future<void> register(
-      {required String name,
-      required String email,
-      required String password}) async {
+  Future<void> register({
+    required String email,
+    required String password,
+  }) async {
     try {
       final AuthResponse response =
           await _client.auth.signUp(password: password, email: email);

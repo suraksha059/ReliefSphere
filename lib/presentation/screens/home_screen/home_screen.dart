@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-import 'package:relief_sphere/app/routes/app_routes.dart';
-import 'package:relief_sphere/core/notifiers/auth/auth_notifiers.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:relief_sphere/core/model/user_model.dart';
+import 'package:relief_sphere/presentation/screens/analytics_screen/analytics_screen.dart';
+import 'package:relief_sphere/presentation/screens/dashboard_screen/dashboard_screen.dart';
+import 'package:relief_sphere/presentation/screens/map_view_screen/map_view_screen.dart';
+import 'package:relief_sphere/presentation/screens/my_request_screen/my_request_screen.dart';
+import 'package:relief_sphere/presentation/screens/profile_screen.dart/profile_screen.dart';
 
-import '../../widgets/custom_app_bar.dart';
-import '../../widgets/feature_card.dart';
+import '../my_donation_screen/my_donation_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,104 +19,201 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  final List<Map<String, dynamic>> _features = [
-    {
-      'title': 'Profile',
-      'description': 'Manage your personal information',
-      'icon': Icons.person,
-    },
-    {
-      'title': 'Settings',
-      'description': 'Configure app preferences',
-      'icon': Icons.settings,
-    },
-    {
-      'title': 'Analytics',
-      'description': 'View your statistics',
-      'icon': Icons.analytics,
-    },
-    {
-      'title': 'Messages',
-      'description': 'Check your inbox',
-      'icon': Icons.message,
-    },
-  ];
+  final PageController _pageController = PageController();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: const CustomAppBar(),
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'Welcome Back!',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-            ),
-            Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.all(16),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                ),
-                itemCount: _features.length,
-                itemBuilder: (context, index) {
-                  return FeatureCard(
-                    title: _features[index]['title'],
-                    description: _features[index]['description'],
-                    icon: _features[index]['icon'],
-                    onTap: () {},
-                  );
-                },
-              ),
-            ),
+    final theme = Theme.of(context);
+    final userRole = UserRole.donor;
 
-            // loggout button
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: ElevatedButton(
-                onPressed: () {
-                  context.read<AuthNotifier>().logout();
-                  context.go(AppRoutes.loginScreen);
-                },
-                child: const Text('Log Out'),
-              ),
-            ),
+    return Scaffold(
+      body: SafeArea(
+        child: PageView(
+          physics: const NeverScrollableScrollPhysics(),
+          controller: _pageController,
+          children: [
+            DashboardScreen(userRole: userRole),
+            if (userRole == UserRole.victim) MyRequestScreen(),
+            if (userRole == UserRole.donor) MyDonationScreen(),
+            MapViewScreen(),
+            if (userRole == UserRole.admin) AnalyticsScreen(userRole: userRole),
+            ProfileScreen(userRole: userRole),
           ],
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home),
-            label: 'Home',
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              theme.colorScheme.surface,
+              theme.colorScheme.surfaceContainerHighest.withAlpha(230),
+            ],
           ),
-          NavigationDestination(
-            icon: Icon(Icons.search),
-            label: 'Search',
+          boxShadow: [
+            BoxShadow(
+              color: theme.shadowColor.withAlpha(20),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+            child: GNav(
+              selectedIndex: _selectedIndex,
+              onTabChange: _onDestinationSelected,
+              gap: 8,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              tabBackgroundColor:
+                  theme.colorScheme.primaryContainer.withOpacity(0.3),
+              activeColor: theme.colorScheme.primary,
+              color: theme.colorScheme.onSurfaceVariant,
+              tabBorderRadius: 16,
+              curve: Curves.easeInOut,
+              duration: const Duration(milliseconds: 300),
+              tabs: _buildNavigationTabs(userRole, theme),
+              rippleColor: theme.colorScheme.primary.withOpacity(0.1),
+              hoverColor: theme.colorScheme.primary.withOpacity(0.05),
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-        ],
+        ),
       ),
+    );
+  }
+
+  List<GButton> _buildNavigationTabs(UserRole role, ThemeData theme) {
+    switch (role) {
+      case UserRole.victim:
+        return [
+          GButton(
+            icon: Icons.space_dashboard_outlined,
+            iconActiveColor: theme.colorScheme.primary,
+            text: 'Home',
+            textStyle: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          GButton(
+            icon: Icons.receipt_long_outlined,
+            iconActiveColor: theme.colorScheme.primary,
+            text: 'Requests',
+            textStyle: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          GButton(
+            icon: Icons.explore_outlined,
+            iconActiveColor: theme.colorScheme.primary,
+            text: 'Explore',
+            textStyle: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          GButton(
+            icon: Icons.person_outline,
+            iconActiveColor: theme.colorScheme.primary,
+            text: 'Profile',
+            textStyle: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ];
+
+      case UserRole.donor:
+        return [
+          GButton(
+            icon: Icons.dashboard_outlined,
+            iconActiveColor: theme.colorScheme.primary,
+            text: 'Home',
+            textStyle: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          GButton(
+            icon: Icons.volunteer_activism_outlined,
+            iconActiveColor: theme.colorScheme.primary,
+            text: 'Donations',
+            textStyle: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          GButton(
+            icon: Icons.explore_outlined,
+            iconActiveColor: theme.colorScheme.primary,
+            text: 'Explore',
+            textStyle: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          GButton(
+            icon: Icons.person_outline,
+            iconActiveColor: theme.colorScheme.primary,
+            text: 'Profile',
+            textStyle: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ];
+
+      case UserRole.admin:
+        return [
+          GButton(
+            icon: Icons.space_dashboard_outlined,
+            iconActiveColor: theme.colorScheme.primary,
+            text: 'Dashboard',
+            textStyle: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          GButton(
+            icon: Icons.explore_outlined,
+            iconActiveColor: theme.colorScheme.primary,
+            text: 'Explore',
+            textStyle: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          GButton(
+            icon: Icons.analytics_outlined,
+            iconActiveColor: theme.colorScheme.primary,
+            text: 'Analytics',
+            textStyle: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          GButton(
+            icon: Icons.person_outline,
+            iconActiveColor: theme.colorScheme.primary,
+            text: 'Profile',
+            textStyle: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ];
+    }
+  }
+
+  void _onDestinationSelected(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    _pageController.jumpToPage(
+      index,
     );
   }
 }

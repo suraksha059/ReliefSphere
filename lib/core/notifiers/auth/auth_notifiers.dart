@@ -26,14 +26,13 @@ class AuthNotifier extends ChangeNotifier {
     _authApi.logout();
   }
 
-  Future<void> register(
-      {required String name,
-      required String email,
-      required String password}) async {
+  Future<void> register({
+    required String email,
+    required String password,
+  }) async {
     _updateState(isLoading: true);
     try {
       await _authApi.register(
-        name: name,
         email: email,
         password: password,
       );
