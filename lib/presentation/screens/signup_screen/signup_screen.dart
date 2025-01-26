@@ -33,18 +33,6 @@ class _SignupScreenState extends State<SignupScreen> {
     final theme = Theme.of(context);
 
     return Consumer<AuthNotifier>(builder: (context, notifier, child) {
-      if (notifier.state.isSuccess) {
-        context.go(AppRoutes.profileSetupScreen);
-      }
-      if (notifier.state.isFailure) {
-        DialogUtils.showFailureDialog(
-          context,
-          theme: theme,
-          title: 'Signup Failed',
-          message: notifier.state.error,
-        );
-      }
-
       return LoadingOverlay(
         isLoading: notifier.state.isLoading,
         child: Scaffold(
@@ -283,44 +271,13 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   void dispose() {
-    context.read<AuthNotifier>().removeListener(_handleAuthStateChange);
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _setupAuthListener();
-    });
-  }
-  
-   void _setupAuthListener() {
-    context.read<AuthNotifier>().addListener(_handleAuthStateChange);
-  }
-
-  void _handleAuthStateChange() {
-    final authState = context.read<AuthNotifier>().state;
-
-    if (!mounted) return;
-
-    if (authState.isSuccess) {
-      context.go(AppRoutes.profileSetupScreen);
-    }
-
-    if (authState.isFailure) {
-      DialogUtils.showFailureDialog(
-        context,
-        theme: Theme.of(context),
-        title: 'Signup Failed',
-        message: authState.error,
-      );
-    }
-  }
-
   void _handleSignup(ThemeData theme) async {
+    final notifier = context.read<AuthNotifier>();
     if (_formKey.currentState?.validate() ?? false) {
       TextInput.finishAutofillContext();
       if (!_acceptedTerms) {
@@ -329,12 +286,23 @@ class _SignupScreenState extends State<SignupScreen> {
         );
         return;
       }
-      await context.read<AuthNotifier>().register(
-            email: _emailController.text,
-            password: _passwordController.text,
-          );
+
+      await notifier.register(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+      if (!mounted) return;
+      if (notifier.state.isSuccess) {
+        context.go(AppRoutes.profileSetupScreen);
+      }
+      if (notifier.state.isFailure) {
+        DialogUtils.showFailureDialog(
+          context,
+          theme: theme,
+          title: 'Signup Failed',
+          message: notifier.state.error,
+        );
+      }
     }
   }
-
- 
 }

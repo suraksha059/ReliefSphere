@@ -6,14 +6,14 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
+import 'package:relief_sphere/app/routes/app_routes.dart';
 import 'package:relief_sphere/core/model/user_model.dart';
 import 'package:relief_sphere/core/notifiers/auth/auth_notifiers.dart';
 import 'package:relief_sphere/presentation/widgets/custom_text_field.dart';
+import 'package:relief_sphere/presentation/widgets/dialogs/dialog_utils.dart';
 import 'package:relief_sphere/presentation/widgets/loading_overlay.dart';
 
 import '../../../app/const/app_assets.dart';
-import '../../../app/routes/app_routes.dart';
-import '../../widgets/dialogs/dialog_utils.dart';
 
 class ProfileCreationScreen extends StatefulWidget {
   const ProfileCreationScreen({super.key});
@@ -120,8 +120,9 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
                         Expanded(
                           flex: 2,
                           child: FilledButton.icon(
-                            onPressed:
-                                _currentStep < 2 ? _nextStep : _completeProfile,
+                            onPressed: _currentStep < 2
+                                ? _nextStep
+                                : () => _completeProfile(theme),
                             icon: Icon(_currentStep < 2
                                 ? Icons.arrow_forward
                                 : Icons.check),
@@ -142,20 +143,6 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
           ),
         ),
       );
-    });
-  }
-
-  @override
-  void dispose() {
-    context.read<AuthNotifier>().removeListener(_handleAuthStateChange);
-    super.dispose();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _setupAuthListener();
     });
   }
 
@@ -516,30 +503,32 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
     }
   }
 
-  void _completeProfile() async {
-    await context.read<AuthNotifier>().profileSetup(
-          name: _nameController.text,
-          phoneNumber: _phoneController.text,
-          userRole: _selectedRole,
-        );
-  }
-
-  void _handleAuthStateChange() {
-    final authState = context.read<AuthNotifier>().state;
-
+  void _completeProfile(ThemeData theme) async {
+    final notifier = context.read<AuthNotifier>();
+    await notifier.profileSetup(
+      name: _nameController.text,
+      phoneNumber: _phoneController.text,
+      userRole: _selectedRole,
+    );
     if (!mounted) return;
-
-    if (authState.isSuccess) {
-      context.go(AppRoutes.profileSetupScreen);
+    if (notifier.state.isSuccess) {
+      DialogUtils.showSuccessDialog(
+        context,
+        theme: theme,
+        message: "Profile created successfully",
+        onPressed: () {
+          context.go(AppRoutes.homeScreen);
+          notifier.resetState();
+        },
+      );
     }
-
-    if (authState.isFailure) {
+    if (notifier.state.isFailure) {
       DialogUtils.showFailureDialog(
         context,
-        theme: Theme.of(context),
-        title: 'Signup Failed',
-        message: authState.error,
+        theme: theme,
+        message: notifier.state.error,
       );
+      notifier.resetState();
     }
   }
 
@@ -568,9 +557,5 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
 
   Future<void> _requestLocationPermission() async {
     setState(() => _locationPermissionGranted = true);
-  }
-
-  void _setupAuthListener() {
-    context.read<AuthNotifier>().addListener(_handleAuthStateChange);
   }
 }

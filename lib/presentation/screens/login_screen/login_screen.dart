@@ -6,7 +6,6 @@ import 'package:relief_sphere/app/const/app_assets.dart';
 import 'package:relief_sphere/app/enum/enum.dart';
 import 'package:relief_sphere/app/routes/app_routes.dart';
 import 'package:relief_sphere/presentation/widgets/loading_overlay.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../app/config/size_config.dart';
 import '../../../core/notifiers/auth/auth_notifiers.dart';
@@ -247,34 +246,26 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleLogin(ThemeData theme) async {
+    final notifier = context.read<AuthNotifier>();
     if (_formKey.currentState?.validate() ?? false) {
       TextInput.finishAutofillContext();
-      try {
-        await context.read<AuthNotifier>().login(
-              _emailController.text,
-              _passwordController.text,
-            );
-        if (mounted) {
-          context.go(AppRoutes.homeScreen);
-        }
-      } on AuthException catch (e) {
-        if (mounted) {
-          DialogUtils.showFailureDialog(
-            context,
-            theme: theme,
-            title: "Login Failed",
-            message: e.message,
+
+      await context.read<AuthNotifier>().login(
+            _emailController.text,
+            _passwordController.text,
           );
-        }
-      } catch (e) {
-        if (mounted) {
-          DialogUtils.showFailureDialog(
-            context,
-            theme: theme,
-            title: "Signup Failed",
-            message: "Please try again later",
-          );
-        }
+
+      if (!mounted) return;
+      if (notifier.state.isSuccess) {
+        context.go(AppRoutes.profileSetupScreen);
+      }
+      if (notifier.state.isFailure) {
+        DialogUtils.showFailureDialog(
+          context,
+          theme: theme,
+          title: 'Signup Failed',
+          message: notifier.state.error,
+        );
       }
     }
   }
