@@ -258,6 +258,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       if (notifier.state.isSuccess) {
         context.go(AppRoutes.profileSetupScreen);
+        notifier.resetState();
       }
       if (notifier.state.isFailure) {
         DialogUtils.showFailureDialog(
@@ -265,6 +266,10 @@ class _LoginScreenState extends State<LoginScreen> {
           theme: theme,
           title: 'Signup Failed',
           message: notifier.state.error,
+          onPressed: () {
+            context.pop();
+            notifier.resetState();
+          },
         );
       }
     }

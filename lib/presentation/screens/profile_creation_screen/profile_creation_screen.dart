@@ -523,12 +523,11 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
       );
     }
     if (notifier.state.isFailure) {
-      DialogUtils.showFailureDialog(
-        context,
-        theme: theme,
-        message: notifier.state.error,
-      );
-      notifier.resetState();
+      DialogUtils.showFailureDialog(context,
+          theme: theme, message: notifier.state.error, onPressed: () {
+        context.pop();
+        notifier.resetState();
+      });
     }
   }
 
