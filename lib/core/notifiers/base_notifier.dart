@@ -30,6 +30,7 @@ abstract class BaseNotifier<T extends BaseState> extends ChangeNotifier {
     catch (e) {
       setFailure(e.message);
     }
+   
   }
 
   void loadMore() {}
