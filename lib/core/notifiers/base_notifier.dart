@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:relief_sphere/app/exceptions/exceptions.dart';
 
 import 'base_state.dart';
 
@@ -24,8 +25,10 @@ abstract class BaseNotifier<T extends BaseState> extends ChangeNotifier {
       if (showLoading) setLoading();
       await operation();
       setSuccess();
-    } catch (e) {
-      setFailure(e.toString());
+    }on AppExceptions 
+    
+    catch (e) {
+      setFailure(e.message);
     }
   }
 

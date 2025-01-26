@@ -33,6 +33,8 @@ class AuthNotifier extends BaseNotifier<AuthState> {
     required String phoneNumber,
     required UserRole userRole,
   }) async {
+
+   
     await handleAsyncOperation(() async {
       await _authApi.profileSetup(
         userId: await _secureStorage.getUserId(),

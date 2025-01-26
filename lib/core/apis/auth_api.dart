@@ -56,9 +56,9 @@ class AuthApi {
       final response =
           await _client.from('users').upsert(userData).select().single();
       return;
-    } catch (error) {
+    } catch  (error) {
       logger.e('Profile setup error: $error');
-      rethrow;
+      throw AppExceptions('Profile setup error');
     }
   }
 
