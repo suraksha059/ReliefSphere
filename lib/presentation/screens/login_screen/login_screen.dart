@@ -35,7 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Consumer<AuthNotifier>(
       builder: (context, notifier, child) {
         return LoadingOverlay(
-          isLoading: notifier.isLoading,
+          isLoading: notifier.state.isLoading,
           child: Scaffold(
             body: Container(
               decoration: BoxDecoration(
@@ -134,7 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               CustomButton(
                                 text: 'Login',
                                 onPressed: () => _handleLogin(theme),
-                                isLoading: notifier.isLoading,
+                                isLoading: notifier.state.isLoading,
                               ),
                             ],
                           ),

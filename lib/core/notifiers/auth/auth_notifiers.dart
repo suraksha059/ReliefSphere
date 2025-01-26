@@ -1,65 +1,66 @@
-import 'package:flutter/widgets.dart';
-import 'package:relief_sphere/app/enum/enum.dart';
-import 'package:relief_sphere/core/apis/auth_api.dart';
-
+import '../../../app/enum/enum.dart';
+import '../../../app/services/secure_storage_service.dart';
+import '../../../app/services/service_locator.dart';
+import '../../apis/auth_api.dart';
+import '../../model/user_model.dart';
+import '../base_notifier.dart';
 import 'auth_state.dart';
 
-class AuthNotifier extends ChangeNotifier {
+class AuthNotifier extends BaseNotifier<AuthState> {
   final AuthApi _authApi = AuthApi();
+  final SecureStorageService _secureStorage = ServiceLocator.secureStorage;
 
-  AuthState _state = const AuthState();
-  bool get isLoading => _state.isLoading;
+  AuthNotifier() : super(const AuthState());
 
-  Future login(String email, String password) async {
-    _updateState(isLoading: true);
-    try {
+  bool get isLoggedIn => state.isLoggedIn;
+
+  Future<void> login(String email, String password) async {
+    await handleAsyncOperation(() async {
       await _authApi.login(email, password);
-      _updateState(isLoading: false, isLoggedIn: true);
-    } catch (e) {
-      _updateState(isLoading: false, error: e.toString(), isLoggedIn: false);
-    } finally {
-      _updateState(isLoading: false);
-    }
+      state = state.copyWith(isLoggedIn: true) as AuthState;
+    });
   }
 
-  void logout() {
-    _authApi.logout();
+  Future<void> logout() async {
+    await handleAsyncOperation(() async {
+      await _authApi.logout();
+      state = state.copyWith(isLoggedIn: false) as AuthState;
+    });
+  }
+
+  Future<void> profileSetup({
+    required String name,
+    required String phoneNumber,
+    required UserRole userRole,
+  }) async {
+    await handleAsyncOperation(() async {
+      await _authApi.profileSetup(
+        userId: await _secureStorage.getUserId(),
+        name: name,
+        phoneNumber: phoneNumber,
+        userRole: userRole,
+      );
+    });
   }
 
   Future<void> register({
     required String email,
     required String password,
   }) async {
-    _updateState(isLoading: true);
-    try {
-      await _authApi.register(
+    await handleAsyncOperation(() async {
+      final userId = await _authApi.register(
         email: email,
         password: password,
       );
-      _updateState(isLoading: false, isLoggedIn: true);
-    } catch (e) {
-      _updateState(isLoading: false, error: e.toString());
-    } finally {
-      _updateState(isLoading: false);
-    }
+      await _secureStorage.saveUserId(userId);
+      state = state.copyWith(isLoggedIn: true) as AuthState;
+    });
   }
 
-  void socialLogin(SocialLoginType type) {
-    _updateState(isLoading: true);
-    _authApi.socialLogin(type);
-    _updateState(isLoading: false, isLoggedIn: true);
-  }
-
-  void _updateState({
-    bool? isLoading,
-    String? error,
-    bool? isLoggedIn,
-  }) {
-    _state = _state.copyWith(
-      isLoading: isLoading,
-      error: error,
-      isLoggedIn: isLoggedIn,
-    );
-    notifyListeners();
+  Future<void> socialLogin(SocialLoginType type) async {
+    await handleAsyncOperation(() async {
+      await _authApi.socialLogin(type);
+      state = state.copyWith(isLoggedIn: true) as AuthState;
+    });
   }
 }

@@ -1,8 +1,11 @@
+import 'package:relief_sphere/app/exceptions/exceptions.dart';
+import 'package:relief_sphere/app/utils/location_utils.dart';
 import 'package:relief_sphere/app/utils/logger_utils.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../app/enum/enum.dart';
 import '../../app/services/service_locator.dart';
+import '../model/user_model.dart';
 
 class AuthApi {
   final SupabaseClient _client = ServiceLocator.supabase.client;
@@ -26,7 +29,40 @@ class AuthApi {
     await _client.auth.signOut();
   }
 
-  Future<void> register({
+  Future<void> profileSetup({
+    required String? userId,
+    required String name,
+    required String phoneNumber,
+    required UserRole userRole,
+  }) async {
+    try {
+      if (userId == null) {
+        throw AppExceptions('User ID not found');
+      }
+
+      final userLocation = await LocationUtils.getUserCurrentLocation();
+      final location = [userLocation.longitude, userLocation.latitude];
+      final userData = {
+        'id': userId,
+        'name': name,
+        'phone_number': phoneNumber,
+        'role': userRole.name,
+        'location': {
+          'type': 'Point',
+          'coordinates': location,
+        },
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+      final response =
+          await _client.from('users').upsert(userData).select().single();
+      return;
+    } catch (error) {
+      logger.e('Profile setup error: $error');
+      rethrow;
+    }
+  }
+
+  Future<String> register({
     required String email,
     required String password,
   }) async {
@@ -34,11 +70,15 @@ class AuthApi {
       final AuthResponse response =
           await _client.auth.signUp(password: password, email: email);
       if (response.user == null) {
-        throw Exception('User not created');
+        throw AppExceptions('User not created');
       }
+      if (response.user?.id == null) {
+        throw AppExceptions('User not created');
+      }
+      return response.user!.id;
     } catch (error) {
       logger.e(error);
-      throw Exception('User not created');
+      throw AppExceptions('User not created');
     }
   }
 
