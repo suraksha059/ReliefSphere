@@ -47,16 +47,14 @@ class AuthApi {
         'name': name,
         'phone_number': phoneNumber,
         'role': userRole.name,
-        'location': {
-          'type': 'Point',
-          'coordinates': location,
-        },
-        'updated_at': DateTime.now().toIso8601String(),
+        'lat': userLocation.latitude,
+        'long': userLocation.longitude,
+        
       };
       final response =
           await _client.from('users').upsert(userData).select().single();
       return;
-    } catch  (error) {
+    } catch (error) {
       logger.e('Profile setup error: $error');
       throw AppExceptions('Profile setup error');
     }

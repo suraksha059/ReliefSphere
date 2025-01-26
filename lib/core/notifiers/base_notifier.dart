@@ -25,10 +25,10 @@ abstract class BaseNotifier<T extends BaseState> extends ChangeNotifier {
       if (showLoading) setLoading();
       await operation();
       setSuccess();
-    }on AppExceptions 
-    
-    catch (e) {
+    } on AppExceptions catch (e) {
       setFailure(e.message);
+    } catch (e) {
+      setFailure("Something went wrong");
     }
   }
 
