@@ -39,20 +39,18 @@ class AuthApi {
       if (userId == null) {
         throw AppExceptions('User ID not found');
       }
-
       final userLocation = await LocationUtils.getUserCurrentLocation();
-      final location = [userLocation.longitude, userLocation.latitude];
+      final location =
+          'SRID=4326;POINT(${userLocation.longitude} ${userLocation.latitude})';
       final userData = {
         'id': userId,
         'name': name,
         'phone_number': phoneNumber,
         'role': userRole.name,
-        'lat': userLocation.latitude,
-        'long': userLocation.longitude,
-        
+        'location': location,
       };
       final response =
-          await _client.from('users').upsert(userData).select().single();
+          await _client.from('profiles').upsert(userData).select().single();
       return;
     } catch (error) {
       logger.e('Profile setup error: $error');
