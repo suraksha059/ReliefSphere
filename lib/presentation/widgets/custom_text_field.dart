@@ -55,8 +55,10 @@ class PrimaryTextFieldState extends State<PrimaryTextField> {
       validator: widget.validator,
       controller: widget.controller,
       obscureText: _isObscure,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
         labelText: widget.label,
+        alignLabelWithHint: true,
         prefixIcon: widget.prefixIcon != null ? Icon(widget.prefixIcon) : null,
         suffixIcon: widget.isObscure
             ? IconButton(

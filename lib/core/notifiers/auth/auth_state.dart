@@ -1,24 +1,27 @@
-class AuthState {
-  final bool isLoading;
-  final String error;
+import 'package:relief_sphere/core/notifiers/base_state.dart';
+
+class AuthState extends BaseState {
   final bool isLoggedIn;
 
   const AuthState({
-    this.isLoading = false,
-    this.error = '',
     this.isLoggedIn = false,
+    super.status = Status.initial,
+    super.error = '',
   });
 
-  AuthState copyWith({
-    bool? isLoading,
-    String? error,
+  @override
+  List<Object?> get props => [isLoggedIn, ...super.props];
+
+  @override
+  BaseState copyWith({
     bool? isLoggedIn,
-    String? userPhone,
+    Status? status,
+    String? error,
   }) {
     return AuthState(
-      isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
       isLoggedIn: isLoggedIn ?? this.isLoggedIn,
+      status: status ?? this.status,
+      error: error ?? this.error,
     );
   }
 }
