@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:khalti_flutter/khalti_flutter.dart';
+import 'package:khalti_checkout_flutter/khalti_checkout_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../../app/utils/logger_utils.dart';
 import '../../../core/model/request_model.dart';
@@ -37,82 +36,9 @@ class _DonateNowScreenState extends State<DonateNowScreen> {
     {'name': 'Khalti', 'icon': Icons.wallet},
     {'name': 'Paypal', 'icon': Icons.paypal},
   ];
-  void _payWithPaypal() {}
 
-  Future _payWithKhalti(BuildContext context) async {
-
-
-    khalti = Khalti.init(
-      enableDebugging: true,
-      payConfig: payConfig,
-      onPaymentResult: (paymentResult, khalti) {
-        log(paymentResult.toString());
-        setState(() {
-          this.paymentResult = paymentResult;
-        });
-        khalti.close(context);
-      },
-      onMessage: (
-        khalti, {
-        description,
-        statusCode,
-        event,
-        needsPaymentConfirmation,
-      }) async {
-        log(
-          'Description: $description, Status Code: $statusCode, Event: $event, NeedsPaymentConfirmation: $needsPaymentConfirmation',
-        );
-        khalti.close(context);
-      },
-      onReturn: () => log('Successfully redirected to return_url.'),
-    );
-
-
-
-    
-  }
-
-  Color _getStatusColor(BuildContext context, RequestStatus status) {
-    final theme = Theme.of(context);
-    switch (status) {
-      case RequestStatus.approved:
-        return Colors.green;
-      case RequestStatus.pending:
-        return theme.colorScheme.primary;
-      case RequestStatus.inProgress:
-        return Colors.orange;
-      case RequestStatus.rejected:
-        return Colors.red;
-      case RequestStatus.completed:
-        return Colors.green;
-      case RequestStatus.cancelled:
-        return Colors.grey;
-    }
-  }
-
-  void onFailure(PaymentFailureModel failure, BuildContext context) {
-    logger.e(failure.message);
-    isPaymentCompleted = false;
-    paymentStatusMessage = 'Payment Failed';
-  }
-
-  void onSuccess(PaymentSuccessModel success) {
-    isPaymentCompleted = true;
-    paymentStatusMessage = 'Payment Success';
-  }
-
-  void onCancel(BuildContext context) {
-    isPaymentCompleted = false;
-    paymentStatusMessage = 'Payment Canceled';
-  }
-
-  @override
-  void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // context.read<RequestNotifier>().createDonation();
-    });
-    super.initState();
-  }
+  late final Future<Khalti?> _khalti;
+  PaymentResult? _paymentResult;
 
   @override
   Widget build(BuildContext context) {
@@ -423,7 +349,6 @@ class _DonateNowScreenState extends State<DonateNowScreen> {
 
               const SizedBox(height: 24),
 
-              // Donate Button
               FilledButton.icon(
                 onPressed:
                     _acceptTerms ? () => _processDonation(context) : null,
@@ -439,6 +364,89 @@ class _DonateNowScreenState extends State<DonateNowScreen> {
       ),
     );
   }
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeKhalti();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // context.read<RequestNotifier>().createDonation();
+    });
+  }
+
+  Widget _buildPaymentStatus() {
+    if (_paymentResult == null) return const SizedBox.shrink();
+
+    return Column(
+      children: [
+        Text('Transaction ID: ${_paymentResult!.payload?.transactionId}'),
+        Text('Status: ${_paymentResult!.payload?.status}'),
+        Text('Amount Paid: ${_paymentResult!.payload?.totalAmount}'),
+      ],
+    );
+  }
+
+  Color _getStatusColor(BuildContext context, RequestStatus status) {
+    final theme = Theme.of(context);
+    switch (status) {
+      case RequestStatus.approved:
+        return Colors.green;
+      case RequestStatus.pending:
+        return theme.colorScheme.primary;
+      case RequestStatus.inProgress:
+        return Colors.orange;
+      case RequestStatus.rejected:
+        return Colors.red;
+      case RequestStatus.completed:
+        return Colors.green;
+      case RequestStatus.cancelled:
+        return Colors.grey;
+    }
+  }
+
+  void _initializeKhalti() {
+    final payConfig = KhaltiPayConfig(
+      publicKey: 'live_public_key_979320ffda734d8e9f7758ac39ec775f',
+      pidx: 'ZyzCEMLFz2QYFYfERGh8LE',
+      environment: Environment.test,
+    );
+
+    _khalti = Khalti.init(
+      enableDebugging: true,
+      payConfig: payConfig,
+      onPaymentResult: (paymentResult, khalti) {
+        logger.i(paymentResult.toString());
+        setState(() {
+          _paymentResult = paymentResult;
+
+          paymentResult.payload?.status ?? "Payment Success";
+        });
+        khalti.close(context);
+      },
+      onMessage: (
+        khalti, {
+        description,
+        statusCode,
+        event,
+        needsPaymentConfirmation,
+      }) async {
+        logger.i(
+          'Description: $description, Status Code: $statusCode, Event: $event, NeedsPaymentConfirmation: $needsPaymentConfirmation',
+        );
+        khalti.close(context);
+      },
+      onReturn: () => logger.i('Successfully redirected to return_url.'),
+    );
+  }
+
+  Future<void> _payWithKhalti(BuildContext context) async {
+    final khaltiInstance = await _khalti;
+    if (khaltiInstance != null) {
+      khaltiInstance.open(context);
+    }
+  }
+
+  void _payWithPaypal() {}
 
   void _processDonation(BuildContext context) async {
     if (_amountController.text.isEmpty || _selectedPaymentMethod.isEmpty) {
