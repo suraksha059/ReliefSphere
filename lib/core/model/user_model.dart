@@ -7,26 +7,32 @@ part 'user_model.g.dart';
 class UserModel extends Equatable {
   final String id;
   final String name;
-  final String email;
+  final String? email;
   final String? avatar;
+  final String? phoneNumber;
+  final double? lat;
+  final double? log;
 
-  @JsonKey(name: 'user_role', defaultValue: UserRole.victim)
+  @JsonKey(name: 'role', defaultValue: UserRole.victim)
   final UserRole userRole;
 
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
 
   @JsonKey(name: 'updated_at')
-  final DateTime updatedAt;
+  final DateTime? updatedAt;
 
   const UserModel({
     required this.id,
     required this.name,
-    required this.email,
+    this.email,
     this.avatar,
     required this.userRole,
     required this.createdAt,
-    required this.updatedAt,
+    this.updatedAt,
+    this.phoneNumber,
+    this.lat,
+    this.log,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) =>

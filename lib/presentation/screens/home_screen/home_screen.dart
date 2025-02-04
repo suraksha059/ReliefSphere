@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:provider/provider.dart';
 import 'package:relief_sphere/core/model/user_model.dart';
+import 'package:relief_sphere/core/notifiers/profile/profile_notifier.dart';
 import 'package:relief_sphere/presentation/screens/analytics_screen/analytics_screen.dart';
 import 'package:relief_sphere/presentation/screens/dashboard_screen/dashboard_screen.dart';
 import 'package:relief_sphere/presentation/screens/map_view_screen/map_view_screen.dart';
@@ -20,66 +22,95 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
   final PageController _pageController = PageController();
+ @override
+  void initState() {
+    super.initState();
+     WidgetsBinding.instance?.addPostFrameCallback((_) {
+      context.read<ProfileNotifier>().getUserProfile();
 
+    });
+  }
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final userRole = UserRole.donor;
 
     return Scaffold(
       body: SafeArea(
-        child: PageView(
-          physics: const NeverScrollableScrollPhysics(),
-          controller: _pageController,
-          children: [
-            DashboardScreen(userRole: userRole),
-            if (userRole == UserRole.victim) MyRequestScreen(),
-            if (userRole == UserRole.donor) MyDonationScreen(),
-            MapViewScreen(),
-            if (userRole == UserRole.admin) AnalyticsScreen(userRole: userRole),
-            ProfileScreen(userRole: userRole),
-          ],
+        child: Consumer<ProfileNotifier>(
+          builder: (context,notifier,child) {
+            if
+              (notifier.state.userModel == null)
+              {
+                return const Center(child: CircularProgressIndicator());
+              }
+            
+
+
+            final userRole = notifier.state.userModel!.userRole;
+            return PageView(
+              physics: const NeverScrollableScrollPhysics(),
+              controller: _pageController,
+              children: [
+                DashboardScreen(userRole: userRole),
+                if (userRole == UserRole.victim) MyRequestScreen(),
+                if (userRole == UserRole.donor) MyDonationScreen(),
+                MapViewScreen(),
+                if (userRole == UserRole.admin) AnalyticsScreen(userRole: userRole),
+                ProfileScreen(userRole: userRole),
+              ],
+            );
+          }
         ),
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              theme.colorScheme.surface,
-              theme.colorScheme.surfaceContainerHighest.withAlpha(230),
-            ],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: theme.shadowColor.withAlpha(20),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
+      bottomNavigationBar: Consumer<ProfileNotifier>(
+
+        builder: (context,notifier,child) {
+          if(notifier.state.userModel == null){
+            return const SizedBox();
+          }
+          final userRole  = notifier.state.userModel!.userRole;
+
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  theme.colorScheme.surface,
+                  theme.colorScheme.surfaceContainerHighest.withAlpha(230),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.shadowColor.withAlpha(20),
+                  blurRadius: 10,
+                  offset: const Offset(0, -5),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
-            child: GNav(
-              selectedIndex: _selectedIndex,
-              onTabChange: _onDestinationSelected,
-              gap: 8,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              tabBackgroundColor:
-                  theme.colorScheme.primaryContainer.withOpacity(0.3),
-              activeColor: theme.colorScheme.primary,
-              color: theme.colorScheme.onSurfaceVariant,
-              tabBorderRadius: 16,
-              curve: Curves.easeInOut,
-              duration: const Duration(milliseconds: 300),
-              tabs: _buildNavigationTabs(userRole, theme),
-              rippleColor: theme.colorScheme.primary.withOpacity(0.1),
-              hoverColor: theme.colorScheme.primary.withOpacity(0.05),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+                child: GNav(
+                  selectedIndex: _selectedIndex,
+                  onTabChange: _onDestinationSelected,
+                  gap: 8,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  tabBackgroundColor:
+                      theme.colorScheme.primaryContainer.withOpacity(0.3),
+                  activeColor: theme.colorScheme.primary,
+                  color: theme.colorScheme.onSurfaceVariant,
+                  tabBorderRadius: 16,
+                  curve: Curves.easeInOut,
+                  duration: const Duration(milliseconds: 300),
+                  tabs: _buildNavigationTabs(userRole, theme),
+                  rippleColor: theme.colorScheme.primary.withOpacity(0.1),
+                  hoverColor: theme.colorScheme.primary.withOpacity(0.05),
+                ),
+              ),
             ),
-          ),
-        ),
+          );
+        }
       ),
     );
   }

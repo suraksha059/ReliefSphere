@@ -78,7 +78,7 @@ class _MapViewScreenState extends State<MapViewScreen> {
                           prefixIcon: const Icon(Icons.search),
                           suffixIcon: IconButton(
                             icon: const Icon(Icons.tune),
-                            onPressed: () {/* Show filters */},
+                            onPressed: () {},
                           ),
                           border: InputBorder.none,
                           contentPadding:
@@ -100,7 +100,6 @@ class _MapViewScreenState extends State<MapViewScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Resource Categories
                     Text(
                       'Resources',
                       style: theme.textTheme.titleLarge?.copyWith(
@@ -135,8 +134,6 @@ class _MapViewScreenState extends State<MapViewScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // Nearby Resources
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -172,10 +169,7 @@ class _MapViewScreenState extends State<MapViewScreen> {
                       status: '45/100 spaces',
                       color: theme.colorScheme.secondary,
                     ),
-
                     const SizedBox(height: 24),
-
-                    // Emergency Contacts
                     Text(
                       'Emergency Contacts',
                       style: theme.textTheme.titleMedium?.copyWith(

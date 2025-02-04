@@ -204,7 +204,7 @@ class DashboardScreen extends StatelessWidget {
           ),
           _buildActionButton(
             context,
-            'Manage Clusters', 
+            'Manage Clusters',
             Icons.hub_outlined,
             () {
               context.push(AppRoutes.manageClusters);
@@ -313,17 +313,6 @@ class DashboardScreen extends StatelessWidget {
             color: Colors.teal,
           ),
         ];
-    }
-  }
-
-  String _getDashboardTitle() {
-    switch (userRole) {
-      case UserRole.victim:
-        return 'Relief Status';
-      case UserRole.donor:
-        return 'Impact Dashboard';
-      case UserRole.admin:
-        return 'Admin Console';
     }
   }
 }

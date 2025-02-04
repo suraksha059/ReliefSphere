@@ -31,5 +31,5 @@ enum Status {
   success,
   failure,
   partialSuccess,
-  cancelled,
+  cancelled, error,
 }

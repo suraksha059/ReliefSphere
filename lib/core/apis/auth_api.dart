@@ -10,18 +10,26 @@ import '../model/user_model.dart';
 class AuthApi {
   final SupabaseClient _client = ServiceLocator.supabase.client;
 
-  Future<void> login(String email, String password) async {
+  Future<String> login(String email, String password) async {
     try {
       final response = await _client.auth.signInWithPassword(
         password: password,
         email: email,
       );
       logger.i(response);
+      if (response.user == null) {
+        throw AppExceptions('Unable to login');
+      }
+      if (response.user?.id == null) {
+        throw AppExceptions('Unable to login');
+      }
+      return response.user!.id;
     } on AuthException catch (error) {
       logger.e(error);
-      rethrow;
+      throw AppExceptions(error.message);
     } catch (error) {
       logger.e(error);
+      throw AppExceptions('Something went wrong');
     }
   }
 
@@ -40,18 +48,17 @@ class AuthApi {
         throw AppExceptions('User ID not found');
       }
       final userLocation = await LocationUtils.getUserCurrentLocation();
-      final location =
-          'SRID=4326;POINT(${userLocation.longitude} ${userLocation.latitude})';
       final userData = {
         'id': userId,
         'name': name,
         'phone_number': phoneNumber,
         'role': userRole.name,
-        'location': location,
+        'log': userLocation.longitude,
+        'lat': userLocation.latitude,
       };
       final response =
           await _client.from('profiles').upsert(userData).select().single();
-      return;
+      print(response);
     } catch (error) {
       logger.e('Profile setup error: $error');
       throw AppExceptions('Profile setup error');

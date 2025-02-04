@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:provider/provider.dart';
+import 'package:relief_sphere/core/model/address_model.dart';
+
+import '../../../core/notifiers/request/request_notifier.dart';
 
 class LocationPickerScreen extends StatefulWidget {
   const LocationPickerScreen({super.key});
@@ -185,10 +190,12 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   }
 
   void _confirmLocation(BuildContext context) {
-    Navigator.pop(context, {
-      'location': _selectedLocation,
-      'address': _address,
-    });
+    AddressModel location = AddressModel(
+        latitude: _selectedLocation?.latitude ?? 0,
+        longitude: _selectedLocation?.longitude ?? 0,
+        address: _address);
+    context.read<RequestNotifier>().setLocation(location);
+    context.pop();
   }
 
   Future<void> _getCurrentLocation() async {

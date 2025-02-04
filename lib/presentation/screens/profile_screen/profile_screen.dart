@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:relief_sphere/core/notifiers/profile/profile_notifier.dart';
 import 'dart:ui';
 
+import '../../../app/routes/app_routes.dart';
 import '../../../core/model/user_model.dart';
+import '../../../core/notifiers/auth/auth_notifiers.dart';
 
 class ProfileScreen extends StatelessWidget {
   final UserRole userRole;
@@ -51,105 +56,140 @@ class ProfileScreen extends StatelessWidget {
                     ),
                   ),
                   // Profile Content
-                  SafeArea(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: LinearGradient(
-                                  colors: [
-                                    theme.colorScheme.primary.withOpacity(0.2),
-                                    theme.colorScheme.primary.withOpacity(0.1),
-                                  ],
-                                ),
-                              ),
-                              child: CircleAvatar(
-                                radius: 50,
-                                backgroundColor:
-                                    theme.colorScheme.primaryContainer,
-                                child: Icon(
-                                  Icons.person_outline,
-                                  size: 50,
-                                  color: theme.colorScheme.primary,
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
+                  Consumer<ProfileNotifier>(
+                      builder: (context, notifier, child) {
+                    if (notifier.state.isLoading) {
+                      return const SliverAppBar(
+                        floating: false,
+                        pinned: true,
+                        toolbarHeight: 100,
+                        expandedHeight: 100,
+                        elevation: 0,
+                        scrolledUnderElevation: 0,
+                        backgroundColor: Colors.white,
+                        flexibleSpace: Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+                    if (notifier.state.userModel == null) {
+                      return const SliverAppBar(
+                        floating: false,
+                        pinned: true,
+                        toolbarHeight: 100,
+                        expandedHeight: 100,
+                        elevation: 0,
+                        scrolledUnderElevation: 0,
+                        backgroundColor: Colors.white,
+                        flexibleSpace: Center(
+                          child: Text('No User Found'),
+                        ),
+                      );
+                    }
+                    final UserModel user = notifier.state.userModel!;
+                    return SafeArea(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Container(
                                 padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
-                                  color: theme.colorScheme.primaryContainer,
                                   shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: theme.colorScheme.surface,
-                                    width: 2,
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      theme.colorScheme.primary
+                                          .withOpacity(0.2),
+                                      theme.colorScheme.primary
+                                          .withOpacity(0.1),
+                                    ],
                                   ),
                                 ),
-                                child: Icon(
-                                  Icons.edit,
-                                  size: 16,
-                                  color: theme.colorScheme.primary,
+                                child: CircleAvatar(
+                                  radius: 50,
+                                  backgroundColor:
+                                      theme.colorScheme.primaryContainer,
+                                  child: Icon(
+                                    Icons.person_outline,
+                                    size: 50,
+                                    color: theme.colorScheme.primary,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'John Doe',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                theme.colorScheme.primaryContainer,
-                                theme.colorScheme.primary.withOpacity(0.1),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: theme.colorScheme.primary.withOpacity(0.2),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.verified,
-                                size: 16,
-                                color: theme.colorScheme.primary,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Verified User',
-                                style: theme.textTheme.labelLarge?.copyWith(
-                                  color: theme.colorScheme.primary,
-                                  fontWeight: FontWeight.w600,
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.primaryContainer,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: theme.colorScheme.surface,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Icons.edit,
+                                    size: 16,
+                                    color: theme.colorScheme.primary,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
+                          const SizedBox(height: 16),
+                          Text(
+                            user.name,
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  theme.colorScheme.primaryContainer,
+                                  theme.colorScheme.primary.withOpacity(0.1),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color:
+                                    theme.colorScheme.primary.withOpacity(0.2),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.verified,
+                                  size: 16,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Verified User',
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                    color: theme.colorScheme.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),
@@ -167,7 +207,9 @@ class ProfileScreen extends StatelessWidget {
                       title: 'Personal Information',
                       icon: Icons.person_outline,
                       color: theme.colorScheme.primary,
-                      onTap: () {},
+                      onTap: () {
+                        print('Personal Information');
+                      },
                     ),
                     _buildListTile(
                       context,
@@ -214,14 +256,19 @@ class ProfileScreen extends StatelessWidget {
                       title: 'About Us',
                       icon: Icons.info_outline,
                       color: theme.colorScheme.secondary,
-                      onTap: () {},
+                      onTap: () {
+                        context.push(AppRoutes.aboutUsScreen);
+                      },
                     ),
                     _buildListTile(
                       context,
                       title: 'Logout',
                       icon: Icons.logout,
                       color: theme.colorScheme.error,
-                      onTap: () => _showLogoutDialog(context),
+                      onTap: () {
+                        print('Logout');
+                        _showLogoutConfirmation(context, theme);
+                      },
                     ),
                   ],
                   theme,
@@ -484,7 +531,126 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  void _showLogoutDialog(BuildContext context) {
-    // Implementation similar to your existing logout dialog
+  void _showLogoutConfirmation(BuildContext context, ThemeData theme) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              theme.colorScheme.surface,
+              theme.colorScheme.surfaceContainerHighest.withAlpha(128),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: theme.colorScheme.outlineVariant.withAlpha(128),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: theme.shadowColor.withAlpha(13),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.outlineVariant.withAlpha(128),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.error.withAlpha(26),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.logout,
+                color: theme.colorScheme.error,
+                size: 32,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Logout',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.error,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Are you sure you want to logout?',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        side: BorderSide(
+                          color: theme.colorScheme.outlineVariant,
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        context.read<AuthNotifier>().logout();
+                        context.go(AppRoutes.loginScreen);
+                      },
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        backgroundColor: theme.colorScheme.error,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Logout',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: theme.colorScheme.onError,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
   }
 }

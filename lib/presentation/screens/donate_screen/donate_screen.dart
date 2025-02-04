@@ -1,11 +1,19 @@
+import 'package:relief_sphere/app/config/size_config.dart';
+import 'package:timeago/timeago.dart' as timeago;
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:relief_sphere/app/const/app_constant.dart';
+import 'package:provider/provider.dart';
 import 'package:relief_sphere/app/routes/app_routes.dart';
-import 'package:relief_sphere/presentation/screens/request_screen/request_type.dart';
+import 'package:relief_sphere/core/notifiers/request/request_notifier.dart';
+import 'package:relief_sphere/core/utils/urgency_utils.dart';
 
+import '../../../core/model/request_model.dart';
 import '../../../core/model/user_model.dart';
+import '../../../core/utils/icon_utils.dart';
+import '../../widgets/custom_image_viewer.dart';
+import '../../widgets/dialogs/dialog_utils.dart';
 
 class DonateScreen extends StatefulWidget {
   final UserRole userRole;
@@ -21,20 +29,28 @@ class DonateScreen extends StatefulWidget {
 
 class _DonateScreenState extends State<DonateScreen> {
   String _selectedCategory = 'All';
-  String _selectedUrgency = 'All';
-  final List<String> _urgencyLevels = [
-    'All',
-    'Critical',
-    'High',
-    'Medium',
-    'Low'
+  UrgencyLevel _selectedUrgency = UrgencyLevel.critical;
+  final List<UrgencyLevel> _urgencyLevels = [
+    UrgencyLevel.critical,
+    UrgencyLevel.veryHigh,
+    UrgencyLevel.high,
+    UrgencyLevel.moderate,
+    UrgencyLevel.low,
   ];
 
-  // Add mock data
-  final List<String> _mockImages = [
-    AppConstant.dummyImageUrl,
-    AppConstant.dummyImageUrl,
-  ];
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _getRequests();
+    });
+    super.initState();
+  }
+
+  void _getRequests() {
+    final notifier = context.read<RequestNotifier>();
+
+    notifier.getPendingAndVerifiedRequest(widget.userRole);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,13 +91,22 @@ class _DonateScreenState extends State<DonateScreen> {
 
           // Request List
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: 10, // Example count
-              itemBuilder: (context, index) {
-                return _buildRequestCard(theme);
-              },
-            ),
+            child:
+                Consumer<RequestNotifier>(builder: (context, notifier, child) {
+              if (notifier.state.isLoading) {
+                return Center(child: CircularProgressIndicator());
+              }
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: notifier
+                    .state.pendingAndVerifiedRequests.length, // Example count
+                itemBuilder: (context, index) {
+                  return _buildRequestCard(theme,
+                      request:
+                          notifier.state.pendingAndVerifiedRequests[index]);
+                },
+              );
+            }),
           ),
         ],
       ),
@@ -144,16 +169,21 @@ class _DonateScreenState extends State<DonateScreen> {
                 padding: const EdgeInsets.only(right: 8),
                 child: FilterChip(
                   selected: isSelected,
-                  label: Text(urgency),
+                  label: Text(urgency.name),
                   onSelected: (selected) {
                     setState(() => _selectedUrgency = urgency);
                   },
                   backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                  selectedColor:
-                      _getUrgencyColor(urgency, theme).withOpacity(0.2),
+                  selectedColor: UrgencyUtils.getUrgencyColor(
+                    urgency,
+                    theme: theme,
+                  ).withOpacity(0.2),
                   labelStyle: theme.textTheme.labelLarge?.copyWith(
                     color: isSelected
-                        ? _getUrgencyColor(urgency, theme)
+                        ? UrgencyUtils.getUrgencyColor(
+                            urgency,
+                            theme: theme,
+                          )
                         : theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -165,7 +195,7 @@ class _DonateScreenState extends State<DonateScreen> {
     );
   }
 
-  Widget _buildRequestCard(ThemeData theme) {
+  Widget _buildRequestCard(ThemeData theme, {required RequestModel request}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -192,23 +222,21 @@ class _DonateScreenState extends State<DonateScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => _showRequestDetails(context),
+          onTap: () => _showRequestDetails(context, request: request),
           borderRadius: BorderRadius.circular(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (_mockImages.isNotEmpty)
+              if (request.images != null && request.images!.isNotEmpty)
                 Container(
+                  clipBehavior: Clip.hardEdge,
                   height: 200,
                   decoration: BoxDecoration(
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(16),
                     ),
-                    image: DecorationImage(
-                      image: NetworkImage(_mockImages.first),
-                      fit: BoxFit.cover,
-                    ),
                   ),
+                  child: CustomImageViewer(images: request.images!),
                 ),
               Padding(
                 padding: const EdgeInsets.all(16),
@@ -218,23 +246,23 @@ class _DonateScreenState extends State<DonateScreen> {
                     // Header Row
                     Row(
                       children: [
-                        _buildUrgencyBadge(theme, 'Critical'),
+                        _buildUrgencyBadge(theme, request.urgencyLevel),
                         const Spacer(),
-                        _buildTypeChip(theme, RequestType.food),
+                        _buildTypeChip(theme, request.type),
                       ],
                     ),
                     const SizedBox(height: 12),
 
                     // Title and Description
                     Text(
-                      'Food & Medical Supplies Needed',
+                      request.title ?? 'No title available',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Family of 5 needs immediate assistance with food and medical supplies...',
+                      request.description,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -251,10 +279,28 @@ class _DonateScreenState extends State<DonateScreen> {
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          'Kathmandu, Nepal • 2.5 km away',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                        SizedBox(
+                          width: SizeConfig.screenWidth - 86,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              SizedBox(
+                                width: SizeConfig.blockSizeHorizontal * 46,
+                                child: Text(
+                                  '${request.address}',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                '2.5 km away',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -263,31 +309,12 @@ class _DonateScreenState extends State<DonateScreen> {
                     const SizedBox(height: 16),
 
                     // Progress Bar
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: LinearProgressIndicator(
-                        value: 0.6,
-                        minHeight: 8,
-                        backgroundColor:
-                            theme.colorScheme.primaryContainer.withOpacity(0.2),
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          theme.colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
 
                     // Progress Info
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          '₹6,000 raised of ₹10,000',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
+                        SizedBox(),
                         Row(
                           children: [
                             Icon(
@@ -297,7 +324,7 @@ class _DonateScreenState extends State<DonateScreen> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '2 hours ago',
+                              timeago.format(request.date ?? DateTime.now()),
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
@@ -315,7 +342,8 @@ class _DonateScreenState extends State<DonateScreen> {
                             children: [
                               Expanded(
                                 child: FilledButton.icon(
-                                  onPressed: () => _verifyRequest(context),
+                                  onPressed: () => _verifyRequest(
+                                      context, request.id ?? 0, false),
                                   icon: const Icon(Icons.verified_outlined),
                                   label: const Text(
                                     'Verify Request',
@@ -333,7 +361,8 @@ class _DonateScreenState extends State<DonateScreen> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: FilledButton.icon(
-                                  onPressed: () => _verifyRequest(context),
+                                  onPressed: () => _verifyRequest(
+                                      context, request.id ?? 0, true),
                                   icon: const Icon(
                                       Icons.report_problem_outlined,
                                       color: Colors.red),
@@ -351,7 +380,8 @@ class _DonateScreenState extends State<DonateScreen> {
                           )
                         : FilledButton.icon(
                             onPressed: () {
-                              context.push(AppRoutes.donateNowScreen);
+                              context.push(AppRoutes.donateNowScreen,
+                                  extra: request);
                             },
                             icon: const Icon(Icons.favorite_outline),
                             label: const Text('Donate Now'),
@@ -380,7 +410,7 @@ class _DonateScreenState extends State<DonateScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            type.icon,
+            getRequestTypeIcon(type),
             size: 16,
             color: theme.colorScheme.primary,
           ),
@@ -397,11 +427,12 @@ class _DonateScreenState extends State<DonateScreen> {
     );
   }
 
-  Widget _buildUrgencyBadge(ThemeData theme, String urgency) {
+  Widget _buildUrgencyBadge(ThemeData theme, UrgencyLevel urgency) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: _getUrgencyColor(urgency, theme).withOpacity(0.1),
+        color: UrgencyUtils.getUrgencyColor(urgency, theme: theme)
+            .withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -410,13 +441,13 @@ class _DonateScreenState extends State<DonateScreen> {
           Icon(
             Icons.error_outline,
             size: 16,
-            color: _getUrgencyColor(urgency, theme),
+            color: UrgencyUtils.getUrgencyColor(urgency, theme: theme),
           ),
           const SizedBox(width: 4),
           Text(
-            urgency,
+            urgency.name,
             style: theme.textTheme.labelMedium?.copyWith(
-              color: _getUrgencyColor(urgency, theme),
+              color: UrgencyUtils.getUrgencyColor(urgency, theme: theme),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -425,26 +456,8 @@ class _DonateScreenState extends State<DonateScreen> {
     );
   }
 
-  Color _getUrgencyColor(String urgency, ThemeData theme) {
-    switch (urgency) {
-      case 'Critical':
-        return theme.colorScheme.error;
-      case 'High':
-        return theme.colorScheme.error.withOpacity(0.8);
-      case 'Medium':
-        return theme.colorScheme.tertiary;
-      case 'Low':
-        return theme.colorScheme.primary;
-      default:
-        return theme.colorScheme.primary;
-    }
-  }
-
-  void _markAsFraud(BuildContext context) {
-    // Implement fraud marking logic
-  }
-
-  void _showRequestDetails(BuildContext context) {
+  void _showRequestDetails(BuildContext context,
+      {required RequestModel request}) {
     final theme = Theme.of(context);
 
     showModalBottomSheet(
@@ -651,7 +664,7 @@ class _DonateScreenState extends State<DonateScreen> {
               ),
               child: FilledButton.icon(
                 onPressed: () {
-                  context.push(AppRoutes.donateNowScreen);
+                  context.push(AppRoutes.donateNowScreen, extra: request);
                 },
                 icon: const Icon(Icons.favorite_outline),
                 label: const Text('Donate Now'),
@@ -666,11 +679,25 @@ class _DonateScreenState extends State<DonateScreen> {
     );
   }
 
-  void _verifyRequest(BuildContext context) {
-    // Implement verification logic
-  }
+  void _verifyRequest(BuildContext context, int id, bool isFraud) async {
+    final notifier = context.read<RequestNotifier>();
+    await notifier.verifyRequest(id: id, isFraud: isFraud);
+    if (!mounted) return;
+    if (!context.mounted) return;
 
-  void _veryfyRequest(BuildContext context) {
-    // Implement verification logic
+    if (notifier.state.isSuccess) {
+      DialogUtils.showSuccessDialog(context, onPressed: () {
+        context.pop();
+        notifier.getPendingAndVerifiedRequest(widget.userRole);
+      }, theme: Theme.of(context), message: 'Request verified successfully');
+    }
+    if (notifier.state.isFailure) {
+      DialogUtils.showFailureDialog(
+        context,
+        theme: Theme.of(context),
+        title: 'Unable to verify request',
+        message: notifier.state.error,
+      );
+    }
   }
 }

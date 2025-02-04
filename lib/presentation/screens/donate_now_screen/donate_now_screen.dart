@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:khalti_flutter/khalti_flutter.dart';
+import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
+
+import '../../../app/utils/logger_utils.dart';
+import '../../../core/model/request_model.dart';
+import '../../../core/notifiers/request/request_notifier.dart';
+import '../../widgets/custom_image_viewer.dart';
+import '../../widgets/dialogs/dialog_utils.dart';
 
 class DonateNowScreen extends StatefulWidget {
-  final String requestTitle;
-  final String requesterId;
-  final double targetAmount;
-  final double raisedAmount;
+  final RequestModel request;
 
   const DonateNowScreen({
     super.key,
-    required this.requestTitle,
-    required this.requesterId,
-    required this.targetAmount,
-    required this.raisedAmount,
+    required this.request,
   });
 
   @override
@@ -20,15 +25,94 @@ class DonateNowScreen extends StatefulWidget {
 
 class _DonateNowScreenState extends State<DonateNowScreen> {
   final TextEditingController _amountController = TextEditingController();
+
+  bool isPaymentCompleted = false;
+  String paymentStatusMessage = '';
   String _selectedAmount = '';
   String _selectedPaymentMethod = '';
   bool _acceptTerms = false;
   final List<String> _quickAmounts = ['100', '500', '1000', '5000'];
   final List<Map<String, dynamic>> _paymentMethods = [
     {'name': 'Credit Card', 'icon': Icons.credit_card},
-    {'name': 'UPI', 'icon': Icons.account_balance},
-    {'name': 'Net Banking', 'icon': Icons.public},
+    {'name': 'Khalti', 'icon': Icons.wallet},
+    {'name': 'Paypal', 'icon': Icons.paypal},
   ];
+  void _payWithPaypal() {}
+
+  Future _payWithKhalti(BuildContext context) async {
+
+
+    khalti = Khalti.init(
+      enableDebugging: true,
+      payConfig: payConfig,
+      onPaymentResult: (paymentResult, khalti) {
+        log(paymentResult.toString());
+        setState(() {
+          this.paymentResult = paymentResult;
+        });
+        khalti.close(context);
+      },
+      onMessage: (
+        khalti, {
+        description,
+        statusCode,
+        event,
+        needsPaymentConfirmation,
+      }) async {
+        log(
+          'Description: $description, Status Code: $statusCode, Event: $event, NeedsPaymentConfirmation: $needsPaymentConfirmation',
+        );
+        khalti.close(context);
+      },
+      onReturn: () => log('Successfully redirected to return_url.'),
+    );
+
+
+
+    
+  }
+
+  Color _getStatusColor(BuildContext context, RequestStatus status) {
+    final theme = Theme.of(context);
+    switch (status) {
+      case RequestStatus.approved:
+        return Colors.green;
+      case RequestStatus.pending:
+        return theme.colorScheme.primary;
+      case RequestStatus.inProgress:
+        return Colors.orange;
+      case RequestStatus.rejected:
+        return Colors.red;
+      case RequestStatus.completed:
+        return Colors.green;
+      case RequestStatus.cancelled:
+        return Colors.grey;
+    }
+  }
+
+  void onFailure(PaymentFailureModel failure, BuildContext context) {
+    logger.e(failure.message);
+    isPaymentCompleted = false;
+    paymentStatusMessage = 'Payment Failed';
+  }
+
+  void onSuccess(PaymentSuccessModel success) {
+    isPaymentCompleted = true;
+    paymentStatusMessage = 'Payment Success';
+  }
+
+  void onCancel(BuildContext context) {
+    isPaymentCompleted = false;
+    paymentStatusMessage = 'Payment Canceled';
+  }
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // context.read<RequestNotifier>().createDonation();
+    });
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,31 +152,142 @@ class _DonateNowScreenState extends State<DonateNowScreen> {
                   border: Border.all(
                     color: theme.colorScheme.primary.withOpacity(0.1),
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: theme.shadowColor.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      widget.requestTitle,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            widget.request.title,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            widget.request.urgencyLevel.value.toUpperCase(),
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    LinearProgressIndicator(
-                      value: widget.raisedAmount / widget.targetAmount,
-                      backgroundColor:
-                          theme.colorScheme.primaryContainer.withOpacity(0.2),
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        theme.colorScheme.primary,
-                      ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.category_outlined,
+                          size: 20,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          widget.request.type.value
+                              .replaceAll('_', ' ')
+                              .toUpperCase(),
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     Text(
-                      '₹${widget.raisedAmount.toStringAsFixed(0)} raised of ₹${widget.targetAmount.toStringAsFixed(0)}',
-                      style: theme.textTheme.bodyMedium?.copyWith(
+                      widget.request.description,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        height: 1.5,
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
+                    ),
+                    if (widget.request.address != null) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 20,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              widget.request.address!,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (widget.request.images?.isNotEmpty ?? false) ...[
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 200,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child:
+                              CustomImageViewer(images: widget.request.images!),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.access_time,
+                          size: 16,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Requested on ${DateFormat('MMM d, yyyy').format(widget.request.date ?? DateTime.now())}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color:
+                                _getStatusColor(context, widget.request.status)
+                                    .withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            widget.request.status.value
+                                .replaceAll('_', ' ')
+                                .toUpperCase(),
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: _getStatusColor(
+                                  context, widget.request.status),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -116,7 +311,7 @@ class _DonateNowScreenState extends State<DonateNowScreen> {
                   color: theme.colorScheme.primary,
                 ),
                 decoration: InputDecoration(
-                  prefixText: '₹ ',
+                  prefixText: 'Rs ',
                   prefixStyle: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: theme.colorScheme.primary,
@@ -147,7 +342,7 @@ class _DonateNowScreenState extends State<DonateNowScreen> {
                         _amountController.text = _selectedAmount;
                       });
                     },
-                    label: Text('₹$amount'),
+                    label: Text('Rs$amount'),
                     labelStyle: theme.textTheme.bodyLarge?.copyWith(
                       color: isSelected
                           ? theme.colorScheme.onPrimaryContainer
@@ -245,7 +440,48 @@ class _DonateNowScreenState extends State<DonateNowScreen> {
     );
   }
 
-  void _processDonation(BuildContext context) {
-    // Implement donation processing logic
+  void _processDonation(BuildContext context) async {
+    if (_amountController.text.isEmpty || _selectedPaymentMethod.isEmpty) {
+      return;
+    }
+
+    final amount = double.parse(_amountController.text);
+    if (_selectedPaymentMethod.toLowerCase() == 'khalti') {
+      await _payWithKhalti(context);
+    }
+    if (_selectedPaymentMethod == 'paypal') {
+      _payWithPaypal();
+    }
+
+    if (isPaymentCompleted) {
+      await context.read<RequestNotifier>().createDonation(
+            requestId: widget.request.id!,
+            amount: amount,
+            paymentMethod: _selectedPaymentMethod,
+          );
+
+      final notifier = context.read<RequestNotifier>().state;
+
+      if (notifier.isSuccess) {
+        DialogUtils.showSuccessDialog(context, onPressed: () {
+          context.pop();
+        }, theme: Theme.of(context), message: 'donation created successfully');
+      }
+      if (notifier.isFailure) {
+        DialogUtils.showFailureDialog(
+          context,
+          theme: Theme.of(context),
+          title: 'Unable to confirm donation',
+          message: notifier.error,
+        );
+      }
+    } else {
+      DialogUtils.showFailureDialog(
+        context,
+        theme: Theme.of(context),
+        title: 'Unable to confirm donation',
+        message: paymentStatusMessage,
+      );
+    }
   }
 }

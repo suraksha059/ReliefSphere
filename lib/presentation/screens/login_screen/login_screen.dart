@@ -82,7 +82,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 40),
-
                           Column(
                             children: [
                               PrimaryTextField(
@@ -137,8 +136,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                           ),
-
-                          // Social Login Section
                           const SizedBox(height: 32),
                           Row(
                             children: [
@@ -179,8 +176,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                           ),
-
-                          // Social Buttons
                           const SizedBox(height: 24),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -201,8 +196,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                           ),
-
-                          // Sign Up Link
                           const SizedBox(height: 32),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -257,7 +250,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
       if (notifier.state.isSuccess) {
-        context.go(AppRoutes.profileSetupScreen);
+        context.go(AppRoutes.homeScreen);
         notifier.resetState();
       }
       if (notifier.state.isFailure) {

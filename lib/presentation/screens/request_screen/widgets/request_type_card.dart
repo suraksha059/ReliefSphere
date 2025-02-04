@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../request_type.dart';
+import '../../../../core/model/request_model.dart';
+import '../../../../core/utils/icon_utils.dart';
+import '../../../../core/utils/label_utils.dart';
 
 class RequestTypeCard extends StatelessWidget {
   final RequestType type;
@@ -84,7 +86,7 @@ class RequestTypeCard extends StatelessWidget {
                     ),
                   ),
                   child: Icon(
-                    type.icon,
+                    getRequestTypeIcon(type),
                     size: 26,
                     color: isSelected
                         ? theme.colorScheme.primary
@@ -93,7 +95,7 @@ class RequestTypeCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  type.label,
+                  getRequestTypeLabel(type),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
@@ -113,4 +115,8 @@ class RequestTypeCard extends StatelessWidget {
       ),
     );
   }
+
+  
+
+  
 }

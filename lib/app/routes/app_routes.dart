@@ -10,6 +10,8 @@ import 'package:relief_sphere/presentation/screens/request_screen/request_screen
 import 'package:relief_sphere/presentation/screens/signup_screen/signup_screen.dart';
 import 'package:relief_sphere/presentation/screens/track_aid_screen/track_aid_screen.dart';
 
+import '../../core/model/request_model.dart';
+import '../../presentation/screens/about_us_screen/about_us_screen.dart';
 import '../../presentation/screens/home_screen/home_screen.dart';
 import '../../presentation/screens/location_picker_screen/location_picker_screen.dart';
 import '../../presentation/screens/login_screen/login_screen.dart';
@@ -66,10 +68,7 @@ final router = GoRouter(
     GoRoute(
       path: AppRoutes.donateNowScreen,
       builder: (context, state) => DonateNowScreen(
-        requestTitle: "Request Title",
-        requesterId: "Requester ID",
-        targetAmount: 23000,
-        raisedAmount: 2000,
+        request: state.extra as RequestModel,
       ),
     ),
     //manageclusters
@@ -85,6 +84,11 @@ final router = GoRouter(
       path: AppRoutes.profileSetupScreen,
       builder: (context, state) => ProfileCreationScreen(),
     ),
+      GoRoute(path: AppRoutes.aboutUsScreen,
+      builder: (context, state) => AboutUsScreen(),
+      )
+
+
   ],
 );
 
@@ -105,4 +109,5 @@ abstract class AppRoutes {
   static const donerMapScreen = '/doner_map';
   static const manageClusters = '/manage_clusters';
   static const addClusterScreen = '/add_cluster';
+  static const aboutUsScreen = '/about_us';
 }

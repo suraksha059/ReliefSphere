@@ -8,6 +8,7 @@ import 'auth_state.dart';
 
 class AuthNotifier extends BaseNotifier<AuthState> {
   final AuthApi _authApi = AuthApi();
+
   final SecureStorageService _secureStorage = ServiceLocator.secureStorage;
 
   AuthNotifier() : super(const AuthState());
@@ -16,13 +17,16 @@ class AuthNotifier extends BaseNotifier<AuthState> {
 
   Future<void> login(String email, String password) async {
     await handleAsyncOperation(() async {
-      await _authApi.login(email, password);
+      final userId = await _authApi.login(email, password);
+      await _secureStorage.saveUserId(userId);
+
       state = state.copyWith(isLoggedIn: true) as AuthState;
     });
   }
 
   Future<void> logout() async {
     await handleAsyncOperation(() async {
+      _secureStorage.deleteAll();
       await _authApi.logout();
       state = state.copyWith(isLoggedIn: false) as AuthState;
     });
@@ -33,8 +37,6 @@ class AuthNotifier extends BaseNotifier<AuthState> {
     required String phoneNumber,
     required UserRole userRole,
   }) async {
-
-   
     await handleAsyncOperation(() async {
       await _authApi.profileSetup(
         userId: await _secureStorage.getUserId(),
