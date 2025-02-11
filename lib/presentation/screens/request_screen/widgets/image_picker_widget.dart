@@ -1,7 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-class ImagePickerWidget extends StatelessWidget {
+class ImagePickerWidget extends StatefulWidget {
   static const int maxImages = 4;
   final List<XFile> images;
   final Function(XFile) onRemove;
@@ -15,6 +16,13 @@ class ImagePickerWidget extends StatelessWidget {
   });
 
   @override
+  State<ImagePickerWidget> createState() => _ImagePickerWidgetState();
+}
+
+class _ImagePickerWidgetState extends State<ImagePickerWidget> {
+  final bool _isLoading = false;
+
+  @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -25,11 +33,11 @@ class ImagePickerWidget extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Add Photos (Optional)',
+              'Add Photos',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             Text(
-              '${images.length}/$maxImages',
+              '${widget.images.length}/${ImagePickerWidget.maxImages}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -42,91 +50,14 @@ class ImagePickerWidget extends StatelessWidget {
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
-              if (images.length < maxImages)
-                Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: InkWell(
-                    onTap: onAdd,
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      width: 120,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: colorScheme.outline),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.add_photo_alternate_outlined,
-                            size: 32,
-                            color: colorScheme.primary,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Add Photo',
-                            style: TextStyle(
-                              color: colorScheme.primary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ...images.map((image) {
-                return Hero(
-                  tag: image.path,
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: Material(
-                      elevation: 2,
-                      borderRadius: BorderRadius.circular(12),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            color: colorScheme.surfaceContainerHighest,
-                          ),
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              Image.network(
-                                image.path,
-                                fit: BoxFit.cover,
-                              ),
-                              Positioned(
-                                right: 4,
-                                top: 4,
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: IconButton.filledTonal(
-                                    icon: const Icon(Icons.close, size: 18),
-                                    onPressed: () => onRemove(image),
-                                    style: IconButton.styleFrom(
-                                      backgroundColor:
-                                          colorScheme.surface.withOpacity(0.7),
-                                      foregroundColor: colorScheme.error,
-                                      padding: const EdgeInsets.all(8),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
+              if (widget.images.length < ImagePickerWidget.maxImages)
+                _buildAddImageButton(colorScheme),
+              ...widget.images
+                  .map((image) => _buildImagePreview(image, colorScheme)),
             ],
           ),
         ),
-        if (images.isNotEmpty)
+        if (widget.images.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
@@ -137,6 +68,98 @@ class ImagePickerWidget extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _buildAddImageButton(ColorScheme colorScheme) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 12),
+      child: InkWell(
+        onTap: _isLoading ? null : widget.onAdd,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: 120,
+          decoration: BoxDecoration(
+            border: Border.all(color: colorScheme.outline),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.add_photo_alternate_outlined,
+                size: 32,
+                color: colorScheme.primary,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Add Photo',
+                style: TextStyle(
+                  color: colorScheme.primary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImagePreview(XFile image, ColorScheme colorScheme) {
+    return Hero(
+      tag: image.path,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 12),
+        child: Material(
+          elevation: 2,
+          borderRadius: BorderRadius.circular(12),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+              ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.file(
+                    File(image.path),
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: colorScheme.errorContainer,
+                        child: Icon(
+                          Icons.error_outline,
+                          color: colorScheme.error,
+                        ),
+                      );
+                    },
+                  ),
+                  Positioned(
+                    right: 4,
+                    top: 4,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: IconButton.filledTonal(
+                        icon: const Icon(Icons.close, size: 18),
+                        onPressed: () => widget.onRemove(image),
+                        style: IconButton.styleFrom(
+                          backgroundColor: colorScheme.surface.withOpacity(0.7),
+                          foregroundColor: colorScheme.error,
+                          padding: const EdgeInsets.all(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

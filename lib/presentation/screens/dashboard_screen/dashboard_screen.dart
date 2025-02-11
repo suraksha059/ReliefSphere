@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:relief_sphere/app/routes/app_routes.dart';
+import 'package:relief_sphere/core/notifiers/home/home_notifier.dart';
 import 'package:relief_sphere/presentation/screens/dashboard_screen/widgets/dashboard_app_bar.dart';
 
 import '../../../core/model/user_model.dart';
@@ -29,7 +31,6 @@ class DashboardScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                // Stats Section
                 GridView.count(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -39,10 +40,7 @@ class DashboardScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(16),
                   children: _buildStatsCards(),
                 ),
-
                 const SizedBox(height: 24),
-
-                // Quick Actions Section
                 SectionTitle(
                   title: 'Quick Actions',
                 ),
@@ -54,10 +52,7 @@ class DashboardScreen extends StatelessWidget {
                     children: _buildQuickActions(context),
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
-                // Recent Activity Section
                 SectionTitle(
                   title: 'Recent Activity',
                   onViewAll: () {},
@@ -167,7 +162,7 @@ class DashboardScreen extends StatelessWidget {
             'Track Aid',
             Icons.track_changes,
             () {
-              context.push(AppRoutes.trackAidScreen);
+              context.push(AppRoutes.myRequestScreen);
             },
           ),
         ]);
@@ -237,13 +232,13 @@ class DashboardScreen extends StatelessWidget {
         return [
           ActivityCard(
             title: 'Donation Success',
-            subtitle: 'Your donation of \$100 was processed',
+            subtitle: 'Your donation of Rs1000 was processed',
             icon: Icons.payments_outlined,
             timestamp: '3h ago',
           ),
           ActivityCard(
             title: 'Impact Update',
-            subtitle: 'Your donation helped 3 families',
+            subtitle: 'Your donation helped 1 family',
             icon: Icons.favorite_outline,
             timestamp: '2d ago',
           ),
@@ -252,7 +247,7 @@ class DashboardScreen extends StatelessWidget {
         return [
           ActivityCard(
             title: 'New Cluster Formed',
-            subtitle: '5 requests grouped in Chennai',
+            subtitle: '5 requests  in Panauti',
             icon: Icons.hub_outlined,
             timestamp: '1h ago',
           ),
@@ -270,47 +265,53 @@ class DashboardScreen extends StatelessWidget {
     switch (userRole) {
       case UserRole.victim:
         return [
-          StatsCard(
-            title: 'Active Requests',
-            value: '2',
-            icon: Icons.pending_actions,
-            color: Colors.blue,
-          ),
-          StatsCard(
-            title: 'Aid Received',
-            value: '\$500',
-            icon: Icons.volunteer_activism,
-            color: Colors.green,
-          ),
+          Consumer<HomeNotifier>(builder: (context, notifier, child) {
+            return StatsCard(
+              title: 'Active Requests',
+              value: '${notifier.state.activeRequests}',
+              icon: Icons.pending_actions,
+              color: Colors.blue,
+            );
+          }),
+          Consumer<HomeNotifier>(builder: (context, notifier, child) {
+            return StatsCard(
+              title: 'Aid Received',
+              value: '${notifier.state.aidReceived}',
+              icon: Icons.volunteer_activism,
+              color: Colors.green,
+            );
+          }),
         ];
       case UserRole.donor:
         return [
           StatsCard(
             title: 'Total Donated',
-            value: '\$2,500',
+            value: 'Rs1000',
             icon: Icons.favorite,
             color: Colors.red,
           ),
           StatsCard(
             title: 'People Helped',
-            value: '15',
+            value: '1',
             icon: Icons.people,
             color: Colors.orange,
           ),
         ];
       case UserRole.admin:
         return [
-          StatsCard(
-            title: 'Pending Requests',
-            value: '25',
-            icon: Icons.assignment_late,
-            color: Colors.purple,
-          ),
+          Consumer<HomeNotifier>(builder: (context, notifier, child) {
+            return StatsCard(
+              title: 'Pending Requests',
+              value: '${notifier.state.pendingRequests}',
+              icon: Icons.assignment_late,
+              color: Colors.purple,
+            );
+          }),
           StatsCard(
             title: 'Active Clusters',
-            value: '8',
+            value: '2',
             icon: Icons.hub,
-            color: Colors.teal,
+            color: const Color.fromARGB(255, 79, 104, 101),
           ),
         ];
     }

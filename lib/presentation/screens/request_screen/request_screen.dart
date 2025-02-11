@@ -198,7 +198,8 @@ class _RequestScreenState extends State<RequestScreen> {
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
-                                  _getUrgencyLabel(_urgencyLevel),
+                                  UrgencyUtils.getUrgencyLevel(_urgencyLevel)
+                                      .name,
                                   style: theme.textTheme.labelMedium?.copyWith(
                                     color: theme.colorScheme.primary,
                                     fontWeight: FontWeight.w600,
@@ -212,7 +213,8 @@ class _RequestScreenState extends State<RequestScreen> {
                             min: 1,
                             max: 5,
                             divisions: 4,
-                            label: _getUrgencyLabel(_urgencyLevel),
+                            label: UrgencyUtils.getUrgencyLevel(_urgencyLevel)
+                                .name,
                             onChanged: (value) {
                               setState(() => _urgencyLevel = value.round());
                             },
@@ -388,17 +390,14 @@ class _RequestScreenState extends State<RequestScreen> {
                 ],
               ),
               child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: FilledButton.icon(
-                    onPressed: () => _submitRequest(theme),
-                    icon: const Icon(Icons.send),
-                    label: const Text('Submit Request'),
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 56),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                child: FilledButton.icon(
+                  onPressed: () => _submitRequest(theme),
+                  icon: const Icon(Icons.send),
+                  label: const Text('Submit Request'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 56),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),
@@ -408,23 +407,6 @@ class _RequestScreenState extends State<RequestScreen> {
         );
       }),
     );
-  }
-
-  String _getUrgencyLabel(int level) {
-    switch (level) {
-      case 1:
-        return 'Low';
-      case 2:
-        return 'Moderate';
-      case 3:
-        return 'High';
-      case 4:
-        return 'Very High';
-      case 5:
-        return 'Critical';
-      default:
-        return '';
-    }
   }
 
   Future<void> _pickImages() async {
@@ -445,16 +427,27 @@ class _RequestScreenState extends State<RequestScreen> {
     final notifier = context.read<RequestNotifier>();
     if (_formKey.currentState?.validate() ?? false) {
       if (notifier.location == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('please select location to continue')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Please select location to continue')));
         return;
       }
+
+      List<String> imageUrls = [];
+      if (_selectedImages.isNotEmpty) {
+        imageUrls = await notifier.uploadRequestImages(_selectedImages);
+      }
+
       final RequestModel request = RequestModel(
         type: _selectedType,
         urgencyLevel: UrgencyUtils.getUrgencyLevel(_urgencyLevel),
         description: _descriptionController.text.trim(),
         title: _titleController.text.trim(),
+        images: imageUrls,
+        lat: notifier.location?.latitude,
+        long: notifier.location?.longitude,
+        address: notifier.location?.address,
       );
+
       await notifier.sendRequest(request: request);
 
       if (!mounted) return;
@@ -463,8 +456,9 @@ class _RequestScreenState extends State<RequestScreen> {
         DialogUtils.showSuccessDialog(context, onPressed: () {
           context.pop();
           context.pop();
-        }, theme: theme, message: 'Request send successfully');
+        }, theme: theme, message: 'Request sent successfully');
       }
+
       if (notifier.state.isFailure) {
         DialogUtils.showFailureDialog(
           context,

@@ -46,7 +46,6 @@ class _MapViewScreenState extends State<MapViewScreen> {
                   zoomControlsEnabled: false,
                   mapToolbarEnabled: false,
                 ),
-                // Search Bar
                 SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -73,7 +72,9 @@ class _MapViewScreenState extends State<MapViewScreen> {
                         ],
                       ),
                       child: TextField(
+                        
                         decoration: InputDecoration(
+
                           hintText: 'Search for resources, safe zones...',
                           prefixIcon: const Icon(Icons.search),
                           suffixIcon: IconButton(
@@ -92,7 +93,6 @@ class _MapViewScreenState extends State<MapViewScreen> {
             ),
           ),
 
-          // Content Section
           Expanded(
             child: SingleChildScrollView(
               child: Padding(

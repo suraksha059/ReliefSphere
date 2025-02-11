@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:relief_sphere/core/model/request_model.dart';
 import 'package:relief_sphere/core/utils/label_utils.dart';
+
+import '../../../../app/routes/app_routes.dart';
 
 class MyRequestCard extends StatelessWidget {
   final RequestModel request;
@@ -127,7 +130,10 @@ class MyRequestCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () {},
+                        onPressed: () {
+                          context.push(AppRoutes.trackAidScreen,
+                              extra: request);
+                        },
                         icon: const Icon(Icons.track_changes),
                         label: const Text('Track'),
                         style: OutlinedButton.styleFrom(
