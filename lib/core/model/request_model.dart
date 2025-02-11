@@ -1,5 +1,5 @@
-import 'package:json_annotation/json_annotation.dart';
 import 'package:equatable/equatable.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 part 'request_model.g.dart';
 
@@ -21,6 +21,7 @@ class RequestModel extends Equatable {
   final DateTime? date;
   final String? address;
   final String title;
+  final double? distance;
 
   const RequestModel({
     this.id,
@@ -34,12 +35,11 @@ class RequestModel extends Equatable {
     this.date,
     this.address,
     required this.title,
+    this.distance,
   });
 
   factory RequestModel.fromJson(Map<String, dynamic> json) =>
       _$RequestModelFromJson(json);
-
-  Map<String, dynamic> toJson() => _$RequestModelToJson(this);
 
   @override
   List<Object?> get props => [
@@ -54,6 +54,7 @@ class RequestModel extends Equatable {
         date,
         address,
         title,
+        distance,
       ];
 
   RequestModel copyWith({
@@ -68,6 +69,7 @@ class RequestModel extends Equatable {
     DateTime? date,
     String? address,
     String? title,
+    double? distance,
   }) {
     return RequestModel(
       id: id ?? this.id,
@@ -81,20 +83,24 @@ class RequestModel extends Equatable {
       date: date ?? this.date,
       address: address ?? this.address,
       title: title ?? this.title,
+      distance: distance ?? this.distance,
     );
   }
+
+  Map<String, dynamic> toJson() => _$RequestModelToJson(this);
 }
 
 @JsonEnum(valueField: 'value')
-enum UrgencyLevel {
-  low('low'),
-  moderate('moderate'),
-  high('high'),
-  veryHigh('very_high'),
-  critical('critical');
+enum RequestStatus {
+  pending('pending'),
+  approved('approved'),
+  inProgress('in_progress'),
+  rejected('rejected'),
+  completed('completed'),
+  cancelled('cancelled');
 
   final String value;
-  const UrgencyLevel(this.value);
+  const RequestStatus(this.value);
 }
 
 @JsonEnum(valueField: 'value')
@@ -111,14 +117,13 @@ enum RequestType {
 }
 
 @JsonEnum(valueField: 'value')
-enum RequestStatus {
-  pending('pending'),
-  approved('approved'),
-  inProgress('in_progress'),
-  rejected('rejected'),
-  completed('completed'),
-  cancelled('cancelled');
+enum UrgencyLevel {
+  low('low'),
+  moderate('moderate'),
+  high('high'),
+  veryHigh('very_high'),
+  critical('critical');
 
   final String value;
-  const RequestStatus(this.value);
+  const UrgencyLevel(this.value);
 }

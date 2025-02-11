@@ -2,14 +2,21 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { cors } from 'https://deno.land/x/cors@v1.2.2/mod.ts';
 
 interface Request {
-  lat: number;
-  long: number;
-}
-
-interface GeoRequest extends Request {
   id: string;
+  lat: number | null;
+  long: number | null;
   created_at: string;
   status: string;
+}
+
+interface RequestWithDistance extends Request {
+  distance: number;
+}
+
+interface RequestBody {
+  requests: Request[];
+  userLat: number;
+  userLon: number;
 }
 
 function vincentyDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -84,31 +91,39 @@ serve(async (req) => {
   }
 
   try {
-    const { requests, userLat, userLon } = await req.json();
+    const { requests, userLat, userLon } = (await req.json()) as RequestBody;
 
     if (!Array.isArray(requests) || typeof userLat !== 'number' || typeof userLon !== 'number') {
       throw new Error('Invalid request format');
     }
 
-    const requestsWithDistance = requests.map((request: GeoRequest) => ({
-      ...request,
-      distance: vincentyDistance(userLat, userLon, request.lat, request.long)
-    }));
-
-    requestsWithDistance.sort((a, b) => a.distance - b.distance);
-
-    return new Response(
-      JSON.stringify(requestsWithDistance),
-      { 
-        headers: {
-          'Content-Type': 'application/json',
-          ...cors(),
+    // Handle requests with valid coordinates
+    const requestsWithDistance: RequestWithDistance[] = requests
+      .map((request) => {
+        if (request.lat === null || request.long === null) {
+          return {
+            ...request,
+            distance: Number.MAX_VALUE // Push null coordinates to end
+          };
         }
+        return {
+          ...request,
+          distance: vincentyDistance(userLat, userLon, request.lat, request.long) / 1000 // Convert to km
+        };
+      })
+      .sort((a, b) => a.distance - b.distance);
+
+    return new Response(JSON.stringify(requestsWithDistance), { 
+      headers: {
+        'Content-Type': 'application/json',
+        ...cors(),
       }
-    );
+    });
   } catch (error) {
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      }),
       { 
         status: 400,
         headers: {
