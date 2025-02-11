@@ -1,5 +1,12 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { cors } from 'https://deno.land/x/cors@v1.2.2/mod.ts';
+
+
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+};
 
 interface Request {
   id: string;
@@ -86,8 +93,9 @@ function vincentyDistance(lat1: number, lon1: number, lat2: number, lon2: number
 }
 
 serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: cors() });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
@@ -97,18 +105,17 @@ serve(async (req) => {
       throw new Error('Invalid request format');
     }
 
-    // Handle requests with valid coordinates
     const requestsWithDistance: RequestWithDistance[] = requests
       .map((request) => {
         if (request.lat === null || request.long === null) {
           return {
             ...request,
-            distance: Number.MAX_VALUE // Push null coordinates to end
+            distance: Number.MAX_VALUE
           };
         }
         return {
           ...request,
-          distance: vincentyDistance(userLat, userLon, request.lat, request.long) / 1000 // Convert to km
+          distance: vincentyDistance(userLat, userLon, request.lat, request.long) / 1000
         };
       })
       .sort((a, b) => a.distance - b.distance);
@@ -116,7 +123,7 @@ serve(async (req) => {
     return new Response(JSON.stringify(requestsWithDistance), { 
       headers: {
         'Content-Type': 'application/json',
-        ...cors(),
+        ...corsHeaders
       }
     });
   } catch (error) {
@@ -128,7 +135,7 @@ serve(async (req) => {
         status: 400,
         headers: {
           'Content-Type': 'application/json',
-          ...cors(),
+          ...corsHeaders
         }
       }
     );
