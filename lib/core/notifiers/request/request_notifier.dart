@@ -1,3 +1,4 @@
+import 'package:image_picker/image_picker.dart';
 import 'package:relief_sphere/core/apis/request_api.dart';
 import 'package:relief_sphere/core/model/address_model.dart';
 import 'package:relief_sphere/core/model/request_model.dart';
@@ -93,6 +94,16 @@ class RequestNotifier extends BaseNotifier<RequestState> {
         status: Status.success,
       );
     });
+  }
+
+  Future<List<String>> uploadRequestImages(List<XFile> images) async {
+    List<String> imageUrls = [];
+
+    await handleAsyncOperation(() async {
+      imageUrls = await _requestApi.uploadImages(images);
+    });
+
+    return imageUrls;
   }
 
   void setLocation(AddressModel location) {

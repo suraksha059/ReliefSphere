@@ -89,7 +89,6 @@ class _DonateScreenState extends State<DonateScreen> {
             child: _buildFilterSection(theme),
           ),
 
-          // Request List
           Expanded(
             child:
                 Consumer<RequestNotifier>(builder: (context, notifier, child) {
@@ -116,7 +115,6 @@ class _DonateScreenState extends State<DonateScreen> {
   Widget _buildFilterSection(ThemeData theme) {
     return Column(
       children: [
-        // Search Bar
         TextField(
           decoration: InputDecoration(
             hintText: 'Search requests...',
@@ -130,7 +128,6 @@ class _DonateScreenState extends State<DonateScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        // Category Filters
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -159,7 +156,6 @@ class _DonateScreenState extends State<DonateScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        // Urgency Filters
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -253,7 +249,6 @@ class _DonateScreenState extends State<DonateScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Title and Description
                     Text(
                       request.title ?? 'No title available',
                       style: theme.textTheme.titleMedium?.copyWith(
@@ -270,7 +265,6 @@ class _DonateScreenState extends State<DonateScreen> {
 
                     const SizedBox(height: 16),
 
-                    // Location Info
                     Row(
                       children: [
                         Icon(
@@ -308,9 +302,7 @@ class _DonateScreenState extends State<DonateScreen> {
 
                     const SizedBox(height: 16),
 
-                    // Progress Bar
 
-                    // Progress Info
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -336,7 +328,6 @@ class _DonateScreenState extends State<DonateScreen> {
 
                     const SizedBox(height: 16),
 
-                    // Action Buttons
                     widget.userRole == UserRole.admin
                         ? Row(
                             children: [
@@ -479,7 +470,6 @@ class _DonateScreenState extends State<DonateScreen> {
         ),
         child: Column(
           children: [
-            // Drag Handle
             const SizedBox(height: 12),
             Container(
               width: 40,
@@ -491,7 +481,6 @@ class _DonateScreenState extends State<DonateScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Map Container (Fixed Height)
             SizedBox(
               height: 200,
               child: ClipRRect(
@@ -509,18 +498,15 @@ class _DonateScreenState extends State<DonateScreen> {
               ),
             ),
 
-            // Scrollable Content
             Expanded(
               child: CustomScrollView(
                 slivers: [
-                  // Profile Section
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.all(24),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Requester Profile
                           Row(
                             children: [
                               CircleAvatar(
@@ -562,7 +548,6 @@ class _DonateScreenState extends State<DonateScreen> {
                           ),
                           const SizedBox(height: 24),
 
-                          // Request Details Card
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
@@ -601,7 +586,6 @@ class _DonateScreenState extends State<DonateScreen> {
                           ),
                           const SizedBox(height: 24),
 
-                          // Progress Section
                           Text(
                             'Donation Progress',
                             style: theme.textTheme.titleMedium?.copyWith(
@@ -649,7 +633,6 @@ class _DonateScreenState extends State<DonateScreen> {
               ),
             ),
 
-            // Bottom Donation Button
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -689,13 +672,17 @@ class _DonateScreenState extends State<DonateScreen> {
       DialogUtils.showSuccessDialog(context, onPressed: () {
         context.pop();
         notifier.getPendingAndVerifiedRequest(widget.userRole);
-      }, theme: Theme.of(context), message: 'Request verified successfully');
+      },
+          theme: Theme.of(context),
+          message: isFraud
+              ? 'Request marked as fraud'
+              : 'Request verified successfully');
     }
     if (notifier.state.isFailure) {
       DialogUtils.showFailureDialog(
         context,
         theme: Theme.of(context),
-        title: 'Unable to verify request',
+        title: isFraud ? 'Unable to mark as fraud' : 'Unable to verify request',
         message: notifier.state.error,
       );
     }

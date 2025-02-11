@@ -3,13 +3,13 @@ import 'package:relief_sphere/core/model/request_model.dart';
 
 class UrgencyUtils {
   static UrgencyLevel getUrgencyLevel(int level) {
-    if (level == 1) {
+    if (level == 5) {
       return UrgencyLevel.critical;
-    } else if (level == 2) {
+    } else if (level == 4) {
       return UrgencyLevel.veryHigh;
     } else if (level == 3) {
       return UrgencyLevel.high;
-    } else if (level == 4) {
+    } else if (level == 2) {
       return UrgencyLevel.moderate;
     } else {
       return UrgencyLevel.low;

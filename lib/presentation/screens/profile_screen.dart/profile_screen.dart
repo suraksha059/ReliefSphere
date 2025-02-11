@@ -208,15 +208,8 @@ class ProfileScreen extends StatelessWidget {
                       icon: Icons.person_outline,
                       color: theme.colorScheme.primary,
                       onTap: () {
-                        print('Personal Information');
+                        context.push(AppRoutes.personalInfoScreen);
                       },
-                    ),
-                    _buildListTile(
-                      context,
-                      title: 'My Requests',
-                      icon: Icons.history,
-                      color: theme.colorScheme.secondary,
-                      onTap: () {},
                     ),
                   ],
                   theme,
@@ -229,14 +222,18 @@ class ProfileScreen extends StatelessWidget {
                       title: 'Account Settings',
                       icon: Icons.settings_outlined,
                       color: theme.colorScheme.tertiary,
-                      onTap: () {},
+                      onTap: () {
+                        context.push(AppRoutes.accountSetttingScreen);
+                      },
                     ),
                     _buildListTile(
                       context,
                       title: 'Notifications',
                       icon: Icons.notifications_outlined,
                       color: theme.colorScheme.secondary,
-                      onTap: () {},
+                      onTap: () {
+                        context.push(AppRoutes.notificationSettingsScreen);
+                      },
                     ),
                   ],
                   theme,
@@ -249,7 +246,9 @@ class ProfileScreen extends StatelessWidget {
                       title: 'Help Center',
                       icon: Icons.help_outline,
                       color: theme.colorScheme.tertiary,
-                      onTap: () {},
+                      onTap: () {
+                        context.push(AppRoutes.helpCenterScreen);
+                      },
                     ),
                     _buildListTile(
                       context,
@@ -266,7 +265,6 @@ class ProfileScreen extends StatelessWidget {
                       icon: Icons.logout,
                       color: theme.colorScheme.error,
                       onTap: () {
-                        print('Logout');
                         _showLogoutConfirmation(context, theme);
                       },
                     ),
@@ -389,21 +387,27 @@ class ProfileScreen extends StatelessWidget {
                 title: 'User Management',
                 icon: Icons.people_outline,
                 color: theme.colorScheme.primary,
-                onTap: () {},
+                onTap: () {
+                  context.push(AppRoutes.userManagementScreen);
+                },
               ),
               _buildListTile(
                 context,
                 title: 'Organization Setup',
                 icon: Icons.business_outlined,
                 color: theme.colorScheme.secondary,
-                onTap: () {},
+                onTap: () {
+                  context.push(AppRoutes.organizationSetupScreen);
+                },
               ),
               _buildListTile(
                 context,
                 title: 'Analytics Dashboard',
                 icon: Icons.analytics_outlined,
                 color: theme.colorScheme.tertiary,
-                onTap: () {},
+                onTap: () {
+                  context.push(AppRoutes.analyticsScreen);
+                },
               ),
             ],
             theme,
@@ -420,52 +424,18 @@ class ProfileScreen extends StatelessWidget {
                 title: 'Donation History',
                 icon: Icons.volunteer_activism,
                 color: theme.colorScheme.primary,
-                onTap: () {},
+                onTap: () {
+                  context.push(AppRoutes.myDonationScreen);
+                },
               ),
               _buildListTile(
                 context,
                 title: 'Impact Tracking',
                 icon: Icons.track_changes,
                 color: theme.colorScheme.secondary,
-                onTap: () {},
-              ),
-              _buildListTile(
-                context,
-                title: 'Tax Receipts',
-                icon: Icons.receipt_long_outlined,
-                color: theme.colorScheme.tertiary,
-                onTap: () {},
-              ),
-            ],
-            theme,
-          ),
-        ];
-
-      case UserRole.admin:
-        return [
-          _buildSection(
-            'Aid Management',
-            [
-              _buildListTile(
-                context,
-                title: 'Active Aid Cases',
-                icon: Icons.medical_services_outlined,
-                color: theme.colorScheme.primary,
-                onTap: () {},
-              ),
-              _buildListTile(
-                context,
-                title: 'Resource Allocation',
-                icon: Icons.inventory_2_outlined,
-                color: theme.colorScheme.secondary,
-                onTap: () {},
-              ),
-              _buildListTile(
-                context,
-                title: 'Reports',
-                icon: Icons.assessment_outlined,
-                color: theme.colorScheme.tertiary,
-                onTap: () {},
+                onTap: () {
+                  context.push(AppRoutes.impactTrackingScreen);
+                },
               ),
             ],
             theme,
@@ -482,14 +452,18 @@ class ProfileScreen extends StatelessWidget {
                 title: 'My Requests',
                 icon: Icons.history,
                 color: theme.colorScheme.primary,
-                onTap: () {},
+                onTap: () {
+                  context.push(AppRoutes.myRequestScreen);
+                },
               ),
               _buildListTile(
                 context,
                 title: 'Active Aid Status',
                 icon: Icons.track_changes,
                 color: theme.colorScheme.secondary,
-                onTap: () {},
+                onTap: () {
+                  context.push(AppRoutes.aidStatusScreen);
+                },
               ),
             ],
             theme,

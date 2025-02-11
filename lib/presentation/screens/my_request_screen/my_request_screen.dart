@@ -9,7 +9,8 @@ import '../../../core/model/user_model.dart';
 import '../dashboard_screen/widgets/dashboard_app_bar.dart';
 
 class MyRequestScreen extends StatefulWidget {
-  const MyRequestScreen({super.key});
+  const MyRequestScreen({super.key, required this.isHome});
+  final bool isHome;
 
   @override
   State<MyRequestScreen> createState() => _MyRequestScreenState();
@@ -35,9 +36,14 @@ class _MyRequestScreenState extends State<MyRequestScreen> {
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          const DashboardSliverAppBar(
-            userRole: UserRole.victim,
-          ),
+          widget.isHome
+              ? const DashboardSliverAppBar(
+                  userRole: UserRole.victim,
+                )
+              : SliverAppBar(
+                  pinned: true,
+                  title: Text('Track aid'),
+                ),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             sliver: SliverToBoxAdapter(

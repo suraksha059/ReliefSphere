@@ -9,6 +9,7 @@ import 'package:relief_sphere/presentation/screens/map_view_screen/map_view_scre
 import 'package:relief_sphere/presentation/screens/my_request_screen/my_request_screen.dart';
 import 'package:relief_sphere/presentation/screens/profile_screen.dart/profile_screen.dart';
 
+import '../../../core/notifiers/home/home_notifier.dart';
 import '../my_donation_screen/my_donation_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -22,96 +23,95 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
   final PageController _pageController = PageController();
- @override
+  @override
   void initState() {
     super.initState();
-     WidgetsBinding.instance?.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProfileNotifier>().getUserProfile();
-
+      context.read<HomeNotifier>().getDashboardItems();
     });
   }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Scaffold(
       body: SafeArea(
-        child: Consumer<ProfileNotifier>(
-          builder: (context,notifier,child) {
-            if
-              (notifier.state.userModel == null)
-              {
-                return const Center(child: CircularProgressIndicator());
-              }
-            
-
-
-            final userRole = notifier.state.userModel!.userRole;
-            return PageView(
-              physics: const NeverScrollableScrollPhysics(),
-              controller: _pageController,
-              children: [
-                DashboardScreen(userRole: userRole),
-                if (userRole == UserRole.victim) MyRequestScreen(),
-                if (userRole == UserRole.donor) MyDonationScreen(),
-                MapViewScreen(),
-                if (userRole == UserRole.admin) AnalyticsScreen(userRole: userRole),
-                ProfileScreen(userRole: userRole),
-              ],
-            );
+        child: Consumer<ProfileNotifier>(builder: (context, notifier, child) {
+          if (notifier.state.userModel == null) {
+            return const Center(child: CircularProgressIndicator());
           }
-        ),
-      ),
-      bottomNavigationBar: Consumer<ProfileNotifier>(
 
-        builder: (context,notifier,child) {
-          if(notifier.state.userModel == null){
-            return const SizedBox();
-          }
-          final userRole  = notifier.state.userModel!.userRole;
-
-          return Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  theme.colorScheme.surface,
-                  theme.colorScheme.surfaceContainerHighest.withAlpha(230),
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: theme.shadowColor.withAlpha(20),
-                  blurRadius: 10,
-                  offset: const Offset(0, -5),
+          final userRole = notifier.state.userModel!.userRole;
+          return PageView(
+            physics: const NeverScrollableScrollPhysics(),
+            controller: _pageController,
+            children: [
+              DashboardScreen(userRole: userRole),
+              if (userRole == UserRole.victim)
+                MyRequestScreen(
+                  isHome: true,
                 ),
-              ],
-            ),
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
-                child: GNav(
-                  selectedIndex: _selectedIndex,
-                  onTabChange: _onDestinationSelected,
-                  gap: 8,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  tabBackgroundColor:
-                      theme.colorScheme.primaryContainer.withOpacity(0.3),
-                  activeColor: theme.colorScheme.primary,
-                  color: theme.colorScheme.onSurfaceVariant,
-                  tabBorderRadius: 16,
-                  curve: Curves.easeInOut,
-                  duration: const Duration(milliseconds: 300),
-                  tabs: _buildNavigationTabs(userRole, theme),
-                  rippleColor: theme.colorScheme.primary.withOpacity(0.1),
-                  hoverColor: theme.colorScheme.primary.withOpacity(0.05),
-                ),
-              ),
-            ),
+              if (userRole == UserRole.donor) MyDonationScreen(),
+              MapViewScreen(),
+              if (userRole == UserRole.admin)
+                AnalyticsScreen(userRole: userRole),
+              ProfileScreen(userRole: userRole),
+            ],
           );
-        }
+        }),
       ),
+      bottomNavigationBar:
+          Consumer<ProfileNotifier>(builder: (context, notifier, child) {
+        if (notifier.state.userModel == null) {
+          return const SizedBox();
+        }
+        final userRole = notifier.state.userModel!.userRole;
+
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                theme.colorScheme.surface,
+                theme.colorScheme.surfaceContainerHighest.withAlpha(230),
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: theme.shadowColor.withAlpha(20),
+                blurRadius: 10,
+                offset: const Offset(0, -5),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+              child: GNav(
+                selectedIndex: _selectedIndex,
+                onTabChange: _onDestinationSelected,
+                gap: 8,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                tabBackgroundColor:
+                    theme.colorScheme.primaryContainer.withOpacity(0.3),
+                activeColor: theme.colorScheme.primary,
+                color: theme.colorScheme.onSurfaceVariant,
+                tabBorderRadius: 16,
+                curve: Curves.easeInOut,
+                duration: const Duration(milliseconds: 300),
+                tabs: _buildNavigationTabs(userRole, theme),
+                rippleColor: theme.colorScheme.primary.withOpacity(0.1),
+                hoverColor: theme.colorScheme.primary.withOpacity(0.05),
+              ),
+            ),
+          ),
+        );
+      }),
     );
   }
 

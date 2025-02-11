@@ -369,9 +369,7 @@ class _DonateNowScreenState extends State<DonateNowScreen> {
   void initState() {
     super.initState();
     _initializeKhalti();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // context.read<RequestNotifier>().createDonation();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {});
   }
 
   Widget _buildPaymentStatus() {
@@ -406,7 +404,7 @@ class _DonateNowScreenState extends State<DonateNowScreen> {
 
   void _initializeKhalti() {
     final payConfig = KhaltiPayConfig(
-      publicKey: 'live_public_key_979320ffda734d8e9f7758ac39ec775f',
+      publicKey: '13c20d96630940dc917847e3cb6a33b4',
       pidx: 'ZyzCEMLFz2QYFYfERGh8LE',
       environment: Environment.test,
     );
@@ -461,34 +459,25 @@ class _DonateNowScreenState extends State<DonateNowScreen> {
       _payWithPaypal();
     }
 
-    if (isPaymentCompleted) {
-      await context.read<RequestNotifier>().createDonation(
-            requestId: widget.request.id!,
-            amount: amount,
-            paymentMethod: _selectedPaymentMethod,
-          );
-
-      final notifier = context.read<RequestNotifier>().state;
-
-      if (notifier.isSuccess) {
-        DialogUtils.showSuccessDialog(context, onPressed: () {
-          context.pop();
-        }, theme: Theme.of(context), message: 'donation created successfully');
-      }
-      if (notifier.isFailure) {
-        DialogUtils.showFailureDialog(
-          context,
-          theme: Theme.of(context),
-          title: 'Unable to confirm donation',
-          message: notifier.error,
+    await context.read<RequestNotifier>().createDonation(
+          requestId: widget.request.id!,
+          amount: amount,
+          paymentMethod: _selectedPaymentMethod,
         );
-      }
-    } else {
+
+    final notifier = context.read<RequestNotifier>().state;
+
+    if (notifier.isSuccess) {
+      DialogUtils.showSuccessDialog(context, onPressed: () {
+        context.pop();
+      }, theme: Theme.of(context), message: 'donation created successfully');
+    }
+    if (notifier.isFailure) {
       DialogUtils.showFailureDialog(
         context,
         theme: Theme.of(context),
         title: 'Unable to confirm donation',
-        message: paymentStatusMessage,
+        message: notifier.error,
       );
     }
   }

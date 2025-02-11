@@ -1,3 +1,4 @@
+import 'package:image_picker/image_picker.dart';
 import 'package:relief_sphere/core/model/request_model.dart';
 import 'package:relief_sphere/core/model/user_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -113,14 +114,32 @@ class RequestApi {
           .select()
           .single();
 
-      // await _client
-      //     .from('requests')
-      //     .update({'status': RequestStatus.inProgress.value}).eq(
-      //         'id', donation.requestId);
-
       return DonationModel.fromJson(response);
     } catch (error) {
       throw AppExceptions('Failed to create donation: ${error.toString()}');
+    }
+  }
+
+  Future<List<String>> uploadImages(List<XFile> images) async {
+    try {
+      final List<String> imageUrls = [];
+
+      for (final image in images) {
+        final fileName =
+            '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
+        final bytes = await image.readAsBytes();
+
+        final response =
+            await _client.storage.from('images').uploadBinary(fileName, bytes);
+
+        final url = _client.storage.from('images').getPublicUrl(fileName);
+
+        imageUrls.add(url);
+      }
+
+      return imageUrls;
+    } catch (error) {
+      throw AppExceptions('Failed to upload images: ${error.toString()}');
     }
   }
 }

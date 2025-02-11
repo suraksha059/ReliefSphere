@@ -46,8 +46,7 @@ dependency_overrides:
   web: ^0.4.0
   archive: ^3.3.5 # Add specific version for archive
   lottie: ^3.3.0 # Pin lottie version
-  geolocator_web: ^3.0.0 # Specify compatible version
-
+  geolocator_web: ^4.1.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
