@@ -1,3 +1,5 @@
+import 'package:relief_sphere/app/services/fcm_service.dart';
+
 import '../../../app/services/secure_storage_service.dart';
 import '../../../app/services/service_locator.dart';
 import '../../apis/auth_api.dart';
@@ -19,6 +21,8 @@ class AuthNotifier extends BaseNotifier<AuthState> {
       final userId = await _authApi.login(email, password);
       await _secureStorage.saveUserId(userId);
 
+      final fcmService = FCMTokenService();
+      await fcmService.sendTokenToServer();
       state = state.copyWith(isLoggedIn: true) as AuthState;
     });
   }

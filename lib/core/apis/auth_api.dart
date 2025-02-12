@@ -3,11 +3,13 @@ import 'package:relief_sphere/app/utils/location_utils.dart';
 import 'package:relief_sphere/app/utils/logger_utils.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../app/services/secure_storage_service.dart';
 import '../../app/services/service_locator.dart';
 import '../model/user_model.dart';
 
 class AuthApi {
   final SupabaseClient _client = ServiceLocator.supabase.client;
+  final SecureStorageService _secureStorage = ServiceLocator.secureStorage;
 
   Future<String> login(String email, String password) async {
     try {
@@ -81,6 +83,22 @@ class AuthApi {
     } catch (error) {
       logger.e(error);
       throw AppExceptions('User not created');
+    }
+  }
+
+  Future<void> updateFCMToken(String token) async {
+    try {
+      if (token.isEmpty) {
+        throw AppExceptions('Invalid FCM token');
+      }
+
+      final userId = _secureStorage.getUserId();
+
+      await _client
+          .from('profiles')
+          .update({'fcm_token': token}).eq('id', userId);
+    } catch (error) {
+      throw AppExceptions('Failed to update FCM token: ${error.toString()}');
     }
   }
 }
