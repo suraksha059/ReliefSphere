@@ -5,7 +5,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:logger/logger.dart';
 import 'package:relief_sphere/core/apis/auth_api.dart';
 
-
 class FCMException implements Exception {
   final String message;
   FCMException(this.message);
@@ -37,20 +36,16 @@ class FCMTokenService {
     }
   }
 
-  /// Get FCM token, generate if not exists
   Future<String?> getToken() async {
     try {
-      // Check cached token first
       if (_cachedToken != null) return _cachedToken;
 
-      // Check stored token
       final storedToken = await _storage.read(key: _tokenKey);
       if (storedToken != null) {
         _cachedToken = storedToken;
         return storedToken;
       }
 
-      // iOS specific handling with retry
       if (Platform.isIOS) {
         return null;
         // ignore: dead_code
