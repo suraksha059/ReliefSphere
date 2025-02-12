@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "952666585229",
+    "project_id": "relief-sphere",
+    "storage_bucket": "relief-sphere.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:952666585229:android:cdeb1e18fccd801f7e0ac4",
+        "android_client_info": {
+          "package_name": "com.example.relief_sphere"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD4r2xoc6HSY-_X2t2lNKbOgeCprjuqwvo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

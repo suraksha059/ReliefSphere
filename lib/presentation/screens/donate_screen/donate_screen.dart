@@ -28,16 +28,7 @@ class DonateScreen extends StatefulWidget {
 }
 
 class _DonateScreenState extends State<DonateScreen> {
-  String _selectedCategory = 'All';
-  UrgencyLevel _selectedUrgency = UrgencyLevel.critical;
-  final List<UrgencyLevel> _urgencyLevels = [
-    UrgencyLevel.critical,
-    UrgencyLevel.veryHigh,
-    UrgencyLevel.high,
-    UrgencyLevel.moderate,
-    UrgencyLevel.low,
-  ];
-
+  String searchTerm = '';
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -88,21 +79,25 @@ class _DonateScreenState extends State<DonateScreen> {
             ),
             child: _buildFilterSection(theme),
           ),
-
           Expanded(
             child:
                 Consumer<RequestNotifier>(builder: (context, notifier, child) {
               if (notifier.state.isLoading) {
                 return Center(child: CircularProgressIndicator());
               }
+
+              final List<RequestModel> filteredItem = searchTerm.isEmpty
+                  ? notifier.state.pendingAndVerifiedRequests
+                  : notifier.state.pendingAndVerifiedRequests
+                      .where((item) => (item.title.contains(searchTerm) ||
+                          item.urgencyLevel.name.contains(searchTerm)))
+                      .toList();
+
               return ListView.builder(
                 padding: const EdgeInsets.all(16),
-                itemCount: notifier
-                    .state.pendingAndVerifiedRequests.length, // Example count
+                itemCount: filteredItem.length, // Example count
                 itemBuilder: (context, index) {
-                  return _buildRequestCard(theme,
-                      request:
-                          notifier.state.pendingAndVerifiedRequests[index]);
+                  return _buildRequestCard(theme, request: filteredItem[index]);
                 },
               );
             }),
@@ -116,6 +111,11 @@ class _DonateScreenState extends State<DonateScreen> {
     return Column(
       children: [
         TextField(
+          onChanged: (value) {
+            setState(() {
+              searchTerm = value;
+            });
+          },
           decoration: InputDecoration(
             hintText: 'Search requests...',
             prefixIcon: const Icon(Icons.search),
@@ -128,65 +128,6 @@ class _DonateScreenState extends State<DonateScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              ...RequestType.values.map((category) {
-                final isSelected = _selectedCategory == category.name;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: FilterChip(
-                    selected: isSelected,
-                    label: Text(category.name),
-                    onSelected: (selected) {
-                      setState(() => _selectedCategory = category.name);
-                    },
-                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                    selectedColor: theme.colorScheme.primaryContainer,
-                    labelStyle: theme.textTheme.labelLarge?.copyWith(
-                      color: isSelected
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                );
-              }),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: _urgencyLevels.map((urgency) {
-              final isSelected = _selectedUrgency == urgency;
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: FilterChip(
-                  selected: isSelected,
-                  label: Text(urgency.name),
-                  onSelected: (selected) {
-                    setState(() => _selectedUrgency = urgency);
-                  },
-                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                  selectedColor: UrgencyUtils.getUrgencyColor(
-                    urgency,
-                    theme: theme,
-                  ).withOpacity(0.2),
-                  labelStyle: theme.textTheme.labelLarge?.copyWith(
-                    color: isSelected
-                        ? UrgencyUtils.getUrgencyColor(
-                            urgency,
-                            theme: theme,
-                          )
-                        : theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
       ],
     );
   }
@@ -218,7 +159,6 @@ class _DonateScreenState extends State<DonateScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => _showRequestDetails(context, request: request),
           borderRadius: BorderRadius.circular(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -289,7 +229,7 @@ class _DonateScreenState extends State<DonateScreen> {
                                 ),
                               ),
                               Text(
-                                '2.5 km away',
+                                '${request.distance?.toStringAsFixed(2)} km away',
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: theme.colorScheme.onSurfaceVariant,
                                 ),
@@ -301,7 +241,6 @@ class _DonateScreenState extends State<DonateScreen> {
                     ),
 
                     const SizedBox(height: 16),
-
 
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -443,221 +382,6 @@ class _DonateScreenState extends State<DonateScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  void _showRequestDetails(BuildContext context,
-      {required RequestModel request}) {
-    final theme = Theme.of(context);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.85,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              theme.colorScheme.surface,
-              theme.colorScheme.surfaceContainerHighest.withAlpha(230),
-            ],
-          ),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.outlineVariant.withAlpha(128),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            SizedBox(
-              height: 200,
-              child: ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(16)),
-                child: GoogleMap(
-                  initialCameraPosition: const CameraPosition(
-                    target: LatLng(27.7172, 85.3240),
-                    zoom: 15,
-                  ),
-                  zoomControlsEnabled: false,
-                  mapToolbarEnabled: false,
-                  myLocationButtonEnabled: false,
-                ),
-              ),
-            ),
-
-            Expanded(
-              child: CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 24,
-                                backgroundColor:
-                                    theme.colorScheme.primaryContainer,
-                                child: Icon(Icons.person_outline,
-                                    color: theme.colorScheme.primary),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'John Doe',
-                                      style:
-                                          theme.textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Text(
-                                      '2.5 km away • Kathmandu, Nepal',
-                                      style:
-                                          theme.textTheme.bodyMedium?.copyWith(
-                                        color:
-                                            theme.colorScheme.onSurfaceVariant,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              FilledButton.tonalIcon(
-                                onPressed: () {},
-                                icon: const Icon(Icons.chat_outlined),
-                                label: const Text('Contact'),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest
-                                  .withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.error_outline,
-                                      color: theme.colorScheme.error,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Critical Need',
-                                      style:
-                                          theme.textTheme.titleSmall?.copyWith(
-                                        color: theme.colorScheme.error,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Family of 5 needs immediate assistance with food and medical supplies.',
-                                  style: theme.textTheme.bodyMedium,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-
-                          Text(
-                            'Donation Progress',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: LinearProgressIndicator(
-                              value: 0.6,
-                              minHeight: 8,
-                              backgroundColor: theme
-                                  .colorScheme.primaryContainer
-                                  .withOpacity(0.2),
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                theme.colorScheme.primary,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                '₹6,000 raised of ₹10,000',
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              Text(
-                                '60%',
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  color: theme.colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    theme.colorScheme.surface.withOpacity(0),
-                    theme.colorScheme.surface,
-                  ],
-                ),
-              ),
-              child: FilledButton.icon(
-                onPressed: () {
-                  context.push(AppRoutes.donateNowScreen, extra: request);
-                },
-                icon: const Icon(Icons.favorite_outline),
-                label: const Text('Donate Now'),
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(56),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

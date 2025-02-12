@@ -3,7 +3,6 @@ import 'package:relief_sphere/app/utils/location_utils.dart';
 import 'package:relief_sphere/app/utils/logger_utils.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../app/enum/enum.dart';
 import '../../app/services/service_locator.dart';
 import '../model/user_model.dart';
 
@@ -83,13 +82,5 @@ class AuthApi {
       logger.e(error);
       throw AppExceptions('User not created');
     }
-  }
-
-  Future<void> socialLogin(SocialLoginType type) async {
-    await _client.auth.signInWithOAuth(
-      type == SocialLoginType.google
-          ? OAuthProvider.google
-          : OAuthProvider.facebook,
-    );
   }
 }

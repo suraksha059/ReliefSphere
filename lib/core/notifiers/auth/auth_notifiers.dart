@@ -1,4 +1,3 @@
-import '../../../app/enum/enum.dart';
 import '../../../app/services/secure_storage_service.dart';
 import '../../../app/services/service_locator.dart';
 import '../../apis/auth_api.dart';
@@ -57,13 +56,6 @@ class AuthNotifier extends BaseNotifier<AuthState> {
         password: password,
       );
       await _secureStorage.saveUserId(userId);
-      state = state.copyWith(isLoggedIn: true) as AuthState;
-    });
-  }
-
-  Future<void> socialLogin(SocialLoginType type) async {
-    await handleAsyncOperation(() async {
-      await _authApi.socialLogin(type);
       state = state.copyWith(isLoggedIn: true) as AuthState;
     });
   }

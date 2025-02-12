@@ -3,16 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:relief_sphere/app/const/app_assets.dart';
-import 'package:relief_sphere/app/enum/enum.dart';
 import 'package:relief_sphere/app/routes/app_routes.dart';
 import 'package:relief_sphere/presentation/widgets/loading_overlay.dart';
 
-import '../../../app/config/size_config.dart';
 import '../../../core/notifiers/auth/auth_notifiers.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/dialogs/dialog_utils.dart';
-import 'widgets/social_login_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -30,6 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
+    final size = MediaQuery.of(context).size;
 
     return Consumer<AuthNotifier>(
       builder: (context, notifier, child) {
@@ -37,51 +35,59 @@ class _LoginScreenState extends State<LoginScreen> {
           isLoading: notifier.state.isLoading,
           child: Scaffold(
             body: Container(
+              height: size.height,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                   colors: [
                     theme.colorScheme.surface,
-                    theme.colorScheme.surfaceContainerHighest.withAlpha(230),
+                    theme.colorScheme.primaryContainer.withOpacity(0.1),
+                    theme.colorScheme.surface,
                   ],
                 ),
               ),
               child: SafeArea(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: size.height * 0.05,
+                  ),
                   child: Form(
                     key: _formKey,
                     child: AutofillGroup(
                       child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const SizedBox(height: 32),
+                          SizedBox(height: size.height * 0.05),
                           Hero(
                             tag: 'app_logo',
                             child: Image.asset(
                               AppAssets.logo,
-                              height: 100,
+                              height: size.height * 0.15,
                             ),
                           ),
-                          const SizedBox(height: 32),
+                          SizedBox(height: size.height * 0.04),
                           Text(
                             'Welcome to ReliefSphere',
                             style: theme.textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w800,
                               color: colorScheme.primary,
+                              letterSpacing: -0.5,
                             ),
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 12),
                           Text(
                             'Login to help or receive aid',
                             style: theme.textTheme.bodyLarge?.copyWith(
                               color: colorScheme.onSurfaceVariant,
+                              letterSpacing: 0.2,
                             ),
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 40),
+                          SizedBox(height: size.height * 0.06),
                           Column(
                             children: [
                               PrimaryTextField(
@@ -136,7 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 32),
+                          SizedBox(height: size.height * 0.04),
                           Row(
                             children: [
                               Expanded(
@@ -152,15 +158,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                               ),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 16),
-                                child: Text(
-                                  'Or continue with',
-                                  style: TextStyle(
-                                      color: colorScheme.onSurfaceVariant),
-                                ),
-                              ),
                               Expanded(
                                 child: Container(
                                   height: 1,
@@ -173,26 +170,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SocialLoginButton(
-                                platformName: 'Google',
-                                icon: AppAssets.googleLogo,
-                                onPressed: () => notifier
-                                    .socialLogin(SocialLoginType.google),
-                              ),
-                              SizedBox(
-                                  width: SizeConfig.blockSizeHorizontal * 4),
-                              SocialLoginButton(
-                                platformName: 'Facebook',
-                                icon: AppAssets.facebookLogo,
-                                onPressed: () => notifier
-                                    .socialLogin(SocialLoginType.facebook),
                               ),
                             ],
                           ),

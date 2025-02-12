@@ -29,7 +29,7 @@ import '../../presentation/screens/notification_setting_screen/notification_sett
 import '../../presentation/screens/user_management_screen/user_management_screen.dart';
 
 final router = GoRouter(
-  initialLocation: AppRoutes.homeScreen,
+  initialLocation: AppRoutes.loginScreen,
   routes: [
     GoRoute(
       path: AppRoutes.loginScreen,
