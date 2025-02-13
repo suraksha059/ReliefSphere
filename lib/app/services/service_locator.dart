@@ -2,6 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../app/api_client/api_client.dart';
 import 'connectivity_service.dart';
+import 'notification_service.dart';
 import 'secure_storage_service.dart';
 import 'shared_preferences_service.dart';
 import 'supabase_service.dart';
@@ -38,5 +39,7 @@ class ServiceLocator {
     _apiClient = ApiClient();
     _supabaseService = SupabaseService();
     await _supabaseService.initialize();
+    final notificationService = NotificationService();
+    await notificationService.initialize();
   }
 }

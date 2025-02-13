@@ -92,7 +92,10 @@ class AuthApi {
         throw AppExceptions('Invalid FCM token');
       }
 
-      final userId = _secureStorage.getUserId();
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        throw AppExceptions('User ID not found');
+      }
 
       await _client
           .from('profiles')
