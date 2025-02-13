@@ -125,13 +125,24 @@ class RequestApi {
 
   Future<RequestModel> sendRequest({required RequestModel request}) async {
     try {
+      final userId = _storageService.getUserId();
       final response = await _client
           .from('requests')
           .insert(request.toJson())
           .select('*')
           .single();
 
-      return RequestModel.fromJson(response);
+      final createdRequest = RequestModel.fromJson(response);
+      await _client.functions.invoke(
+        'request-notifications',
+        body: {
+          'type': 'request_created',
+          'requestId': createdRequest.id,
+          'requestedBy': userId,
+        },
+      );
+
+      return createdRequest;
     } catch (error) {
       throw AppExceptions('Failed to send request: ${error.toString()}');
     }
