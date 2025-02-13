@@ -7,7 +7,7 @@ const corsHeaders = {
 }
 
 interface NotificationRequest {
-  type: 'request_created' | 'request_approved' | 'request_rejected';
+  type: 'request_approved' | 'request_rejected';
   requestId: string;
   requestedBy: string;
 }
@@ -30,34 +30,6 @@ serve(async (req) => {
     const { type, requestId, requestedBy } = await req.json() as NotificationRequest
 
     switch (type) {
-      case 'request_created':
-        await createNotification({
-          profileId: requestedBy,
-          title: 'Request Submitted',
-          message: 'Your request is being reviewed by our admin team.',
-          type: 'request_created',
-          data: { request_id: requestId },
-          supabase
-        })
-
-        // Notify admins
-        const { data: admins } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('role', 'admin')
-
-        for (const admin of admins || []) {
-          await createNotification({
-            profileId: admin.id,
-            title: 'New Request Pending',
-            message: 'A new request needs your verification.',
-            type: 'admin_notification',
-            data: { request_id: requestId },
-            supabase
-          })
-        }
-        break
-
       case 'request_approved':
         // Notify donors
         const { data: donors } = await supabase
@@ -85,7 +57,7 @@ serve(async (req) => {
           data: { request_id: requestId },
           supabase
         })
-        break
+        break;
 
       case 'request_rejected':
         await createNotification({
@@ -96,7 +68,10 @@ serve(async (req) => {
           data: { request_id: requestId },
           supabase
         })
-        break
+        break;
+
+      default:
+        throw new Error('Invalid notification type');
     }
 
     return new Response(
@@ -128,7 +103,7 @@ serve(async (req) => {
 async function createNotification({
   profileId,
   title,
-  message,
+  message, // we'll use this as body
   type,
   data,
   supabase
@@ -140,12 +115,25 @@ async function createNotification({
   data: Record<string, string>;
   supabase: any;
 }) {
+  // First fetch the FCM token
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('fcm_token')
+    .eq('id', profileId)
+    .single();
+
+  if (profileError || !profile?.fcm_token) {
+    console.error('No FCM token found for user:', profileId);
+  }
+
+  // Create notification with token if available
   await supabase.from('notifications').insert({
     profile_id: profileId,
     title,
-    message,
+    message: message, // renamed from message to body
     type,
     data,
+    token: profile?.fcm_token, // Add FCM token
     created_at: new Date().toISOString()
-  })
+  });
 }

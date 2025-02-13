@@ -125,7 +125,6 @@ class RequestApi {
 
   Future<RequestModel> sendRequest({required RequestModel request}) async {
     try {
-      final userId = _storageService.getUserId();
       final response = await _client
           .from('requests')
           .insert(request.toJson())
