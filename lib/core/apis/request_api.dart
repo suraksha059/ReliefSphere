@@ -175,25 +175,32 @@ class RequestApi {
     try {
       final status = isFreaud ? RequestStatus.rejected : RequestStatus.approved;
 
+      // First get the request details
+      final requestData = await _client
+          .from('requests')
+          .select('requested_by')
+          .eq('id', id)
+          .single();
+
+      // Update the request status
       await _client
           .from('requests')
           .update({'status': status.value}).eq('id', id);
 
+      // Prepare notification data
+      final notificationData = {
+        'type': isFreaud ? 'request_rejected' : 'request_approved',
+        'requestId': id.toString(), // Convert to string to ensure serialization
+        'requestedBy': requestData['requested_by'],
+      };
+
       // Trigger notifications
       await _client.functions.invoke(
         'request-notifications',
-        body: {
-          'type': isFreaud ? 'request_rejected' : 'request_approved',
-          'requestId': id,
-          'requestedBy': (await _client
-              .from('requests')
-              .select('requested_by')
-              .eq('id', id)
-              .single())['requested_by'],
-        },
+        body: notificationData,
       );
     } catch (e) {
-      throw AppExceptions('failed to verify request');
+      throw AppExceptions('Failed to verify request: ${e.toString()}');
     }
   }
 }

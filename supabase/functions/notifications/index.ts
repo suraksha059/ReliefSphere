@@ -1,6 +1,6 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7"
+import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import admin from "npm:firebase-admin@11.11.1"
 
 // Debug logging for initialization
@@ -15,11 +15,13 @@ const corsHeaders = {
 }
 
 interface NotificationPayload {
-  token: string;
+  profile_id: string;
   title: string;
   body: string;
+  type: string;
   data?: Record<string, string>;
-  profile_id: string;
+  token?: string;
+  created_at: string;
 }
 
 interface WebhookPayload {
