@@ -89,13 +89,21 @@ serve(async (req) => {
       throw new Error('Invalid FCM token format')
     }
 
+    // Convert all data values to strings
+    const stringifiedData: Record<string, string> = {};
+    if (payload.record.data) {
+      Object.entries(payload.record.data).forEach(([key, value]) => {
+        stringifiedData[key] = String(value);
+      });
+    }
+
     const message = {
       token: data.fcm_token,
       notification: {
         title: payload.record.title,
         body: payload.record.body,
       },
-      data: payload.record.data || {},
+      data: stringifiedData, // Use the stringified data
       android: {
         priority: 'high',
       },
