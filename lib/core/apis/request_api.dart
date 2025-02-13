@@ -1,4 +1,5 @@
 import 'package:image_picker/image_picker.dart';
+import 'package:relief_sphere/app/services/secure_storage_service.dart';
 import 'package:relief_sphere/core/model/request_model.dart';
 import 'package:relief_sphere/core/model/user_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -10,6 +11,7 @@ import '../model/donation_model.dart';
 
 class RequestApi {
   final SupabaseClient _client = ServiceLocator.supabase.client;
+  final SecureStorageService _storageService = ServiceLocator.secureStorage;
 
   Future<DonationModel> createDonation(
       {required DonationModel donation}) async {
@@ -123,13 +125,24 @@ class RequestApi {
 
   Future<RequestModel> sendRequest({required RequestModel request}) async {
     try {
+      final userId = _storageService.getUserId();
       final response = await _client
           .from('requests')
           .insert(request.toJson())
           .select('*')
           .single();
 
-      return RequestModel.fromJson(response);
+      final createdRequest = RequestModel.fromJson(response);
+      await _client.functions.invoke(
+        'request-notifications',
+        body: {
+          'type': 'request_created',
+          'requestId': createdRequest.id,
+          'requestedBy': userId,
+        },
+      );
+
+      return createdRequest;
     } catch (error) {
       throw AppExceptions('Failed to send request: ${error.toString()}');
     }
@@ -165,6 +178,20 @@ class RequestApi {
       await _client
           .from('requests')
           .update({'status': status.value}).eq('id', id);
+
+      // Trigger notifications
+      await _client.functions.invoke(
+        'request-notifications',
+        body: {
+          'type': isFreaud ? 'request_rejected' : 'request_approved',
+          'requestId': id,
+          'requestedBy': (await _client
+              .from('requests')
+              .select('requested_by')
+              .eq('id', id)
+              .single())['requested_by'],
+        },
+      );
     } catch (e) {
       throw AppExceptions('failed to verify request');
     }

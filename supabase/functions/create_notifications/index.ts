@@ -1,32 +1,151 @@
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 
-// Setup type definitions for built-in Supabase Runtime APIs
-import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
-console.log("Hello from Functions!")
+interface NotificationRequest {
+  type: 'request_created' | 'request_approved' | 'request_rejected';
+  requestId: string;
+  requestedBy: string;
+}
 
-Deno.serve(async (req) => {
-  const { name } = await req.json()
-  const data = {
-    message: `Hello ${name}!`,
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
   }
 
-  return new Response(
-    JSON.stringify(data),
-    { headers: { "Content-Type": "application/json" } },
-  )
+  const supabaseUrl = Deno.env.get('URL')
+  const supabaseKey = Deno.env.get('SERVICE_ROLE_KEY')
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Missing environment variables')
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey)
+
+  try {
+    const { type, requestId, requestedBy } = await req.json() as NotificationRequest
+
+    switch (type) {
+      case 'request_created':
+        await createNotification({
+          profileId: requestedBy,
+          title: 'Request Submitted',
+          message: 'Your request is being reviewed by our admin team.',
+          type: 'request_created',
+          data: { request_id: requestId },
+          supabase
+        })
+
+        // Notify admins
+        const { data: admins } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('role', 'admin')
+
+        for (const admin of admins || []) {
+          await createNotification({
+            profileId: admin.id,
+            title: 'New Request Pending',
+            message: 'A new request needs your verification.',
+            type: 'admin_notification',
+            data: { request_id: requestId },
+            supabase
+          })
+        }
+        break
+
+      case 'request_approved':
+        // Notify donors
+        const { data: donors } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('role', 'donor')
+
+        for (const donor of donors || []) {
+          await createNotification({
+            profileId: donor.id,
+            title: 'New Donation Opportunity',
+            message: 'A new verified request needs your help.',
+            type: 'donor_notification',
+            data: { request_id: requestId },
+            supabase
+          })
+        }
+
+        // Notify requester
+        await createNotification({
+          profileId: requestedBy,
+          title: 'Request Approved',
+          message: 'Your request has been approved and shared with donors.',
+          type: 'request_status',
+          data: { request_id: requestId },
+          supabase
+        })
+        break
+
+      case 'request_rejected':
+        await createNotification({
+          profileId: requestedBy,
+          title: 'Request Rejected',
+          message: 'Your request could not be approved at this time.',
+          type: 'request_status',
+          data: { request_id: requestId },
+          supabase
+        })
+        break
+    }
+
+    return new Response(
+      JSON.stringify({ success: true }),
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
+      }
+    )
+
+  } catch (error) {
+    return new Response(
+      JSON.stringify({ 
+        error: error.message 
+      }),
+      {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
+      }
+    )
+  }
 })
 
-/* To invoke locally:
-
-  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
-
-  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/create_notifications' \
-    --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
-    --header 'Content-Type: application/json' \
-    --data '{"name":"Functions"}'
-
-*/
+async function createNotification({
+  profileId,
+  title,
+  message,
+  type,
+  data,
+  supabase
+}: {
+  profileId: string;
+  title: string;
+  message: string;
+  type: string;
+  data: Record<string, string>;
+  supabase: any;
+}) {
+  await supabase.from('notifications').insert({
+    profile_id: profileId,
+    title,
+    message,
+    type,
+    data,
+    created_at: new Date().toISOString()
+  })
+}
