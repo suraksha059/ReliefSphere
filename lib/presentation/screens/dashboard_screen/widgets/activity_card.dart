@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class ActivityCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final IconData icon;
-  final String timestamp;
+  final DateTime timestamp;
 
   const ActivityCard({
     super.key,
@@ -104,7 +105,7 @@ class ActivityCard extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    timestamp,
+                    timeago.format(timestamp),
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,

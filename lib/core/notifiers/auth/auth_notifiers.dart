@@ -23,7 +23,9 @@ class AuthNotifier extends BaseNotifier<AuthState> {
 
       final fcmService = FCMTokenService();
       await fcmService.sendTokenToServer();
-      state = state.copyWith(isLoggedIn: true) as AuthState;
+      state = state.copyWith(
+        isLoggedIn: true,
+      );
     });
   }
 
@@ -31,7 +33,7 @@ class AuthNotifier extends BaseNotifier<AuthState> {
     await handleAsyncOperation(() async {
       _secureStorage.deleteAll();
       await _authApi.logout();
-      state = state.copyWith(isLoggedIn: false) as AuthState;
+      state = state.copyWith(isLoggedIn: false);
     });
   }
 
@@ -60,7 +62,19 @@ class AuthNotifier extends BaseNotifier<AuthState> {
         password: password,
       );
       await _secureStorage.saveUserId(userId);
-      state = state.copyWith(isLoggedIn: true) as AuthState;
+      state = state.copyWith(isLoggedIn: true);
+    });
+  }
+
+  Future<void> resetPassword(String email) async {
+    await handleAsyncOperation(() async {
+      await _authApi.resetPassword(email);
+    });
+  }
+
+  Future<void> updatePasswordWithToken(String token, String newPassword) async {
+    await handleAsyncOperation(() async {
+      await _authApi.updatePasswordWithToken(token, newPassword);
     });
   }
 }

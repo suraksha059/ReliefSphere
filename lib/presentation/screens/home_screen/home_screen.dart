@@ -10,6 +10,7 @@ import 'package:relief_sphere/presentation/screens/my_request_screen/my_request_
 import 'package:relief_sphere/presentation/screens/profile_screen.dart/profile_screen.dart';
 
 import '../../../core/notifiers/home/home_notifier.dart';
+import '../../../core/notifiers/notification/notification_notifers.dart';
 import '../my_donation_screen/my_donation_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -29,6 +30,8 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProfileNotifier>().getUserProfile();
       context.read<HomeNotifier>().getDashboardItems();
+      context.read<NotificationNotifier>().getNotificationsCount();
+      context.read<NotificationNotifier>().getNotifications();
     });
   }
 

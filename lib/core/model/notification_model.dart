@@ -12,7 +12,7 @@ class NotificationModel extends Equatable {
   final DateTime timestamp;
   @JsonKey(name: 'is_read', defaultValue: false)
   final bool isRead;
-  final String type;
+  final String? type;
 
   const NotificationModel({
     required this.id,
@@ -20,7 +20,7 @@ class NotificationModel extends Equatable {
     required this.message,
     required this.timestamp,
     this.isRead = false,
-    required this.type,
+    this.type,
   });
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) =>

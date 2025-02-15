@@ -13,7 +13,7 @@ NotificationModel _$NotificationModelFromJson(Map<String, dynamic> json) =>
       message: json['message'] as String,
       timestamp: DateTime.parse(json['time_stamp'] as String),
       isRead: json['is_read'] as bool? ?? false,
-      type: json['type'] as String,
+      type: json['type'] as String?,
     );
 
 Map<String, dynamic> _$NotificationModelToJson(NotificationModel instance) =>

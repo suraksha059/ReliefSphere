@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
-
 class NotificationCard extends StatelessWidget {
-   final String title;
-   final String description;
-   final DateTime time;
-   final bool isUnread;
-   final String type;
-    
+  final String title;
+  final String description;
+  final DateTime time;
+  final bool isUnread;
+  final String? type;
 
-  
-  const NotificationCard({super.key,required  this.title,
-    required  this.description,
-    required  this.time,
-     this.isUnread = false,
-    required  this.type,}) 
-  ;
+  const NotificationCard({
+    super.key,
+    required this.title,
+    required this.description,
+    required this.time,
+    this.isUnread = false,
+    this.type,
+  });
 
-Color getColor(String type) {
+  Color getColor(String? type) {
     switch (type) {
       case 'approved':
         return Colors.green;
@@ -30,7 +29,8 @@ Color getColor(String type) {
         return Colors.grey;
     }
   }
-IconData getIcon(String type) {
+
+  IconData getIcon(String? type) {
     switch (type) {
       case 'approved':
         return Icons.check_circle_outline;
@@ -42,13 +42,11 @@ IconData getIcon(String type) {
         return Icons.notifications;
     }
   }
-  
 
   @override
   Widget build(BuildContext context) {
-
     final theme = Theme.of(context);
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -85,7 +83,7 @@ IconData getIcon(String type) {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: getColor(  type).withOpacity(0.1),
+                    color: getColor(type).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -105,7 +103,9 @@ IconData getIcon(String type) {
                             child: Text(
                               title,
                               style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: isUnread ? FontWeight.bold : FontWeight.w600,
+                                fontWeight: isUnread
+                                    ? FontWeight.bold
+                                    : FontWeight.w600,
                                 letterSpacing: 0.2,
                               ),
                             ),
@@ -146,6 +146,5 @@ IconData getIcon(String type) {
         ),
       ),
     );
-  
   }
 }

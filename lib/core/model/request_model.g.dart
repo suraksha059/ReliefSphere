@@ -22,6 +22,7 @@ RequestModel _$RequestModelFromJson(Map<String, dynamic> json) => RequestModel(
           : DateTime.parse(json['created_at'] as String),
       address: json['address'] as String?,
       title: json['title'] as String,
+      distance: (json['distance'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$RequestModelToJson(RequestModel instance) =>
@@ -35,6 +36,7 @@ Map<String, dynamic> _$RequestModelToJson(RequestModel instance) =>
       'status': _$RequestStatusEnumMap[instance.status]!,
       'address': instance.address,
       'title': instance.title,
+      'distance': instance.distance,
     };
 
 const _$RequestTypeEnumMap = {

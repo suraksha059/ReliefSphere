@@ -26,6 +26,7 @@ import '../../presentation/screens/notification_screen/notification_screen.dart'
 import '../../presentation/screens/organization_setup_screen/organization_setup_screen.dart';
 import '../../presentation/screens/personal_info_screen/personal_info_screen.dart';
 import '../../presentation/screens/notification_setting_screen/notification_setting_screen.dart';
+import '../../presentation/screens/reset_password_screen/reset_password_screen.dart';
 import '../../presentation/screens/user_management_screen/user_management_screen.dart';
 
 final router = GoRouter(
@@ -143,6 +144,10 @@ final router = GoRouter(
       path: AppRoutes.impactTrackingScreen,
       builder: (context, state) => ImpactTrackingScreen(),
     ),
+    GoRoute(
+      path: AppRoutes.resetPasswordScreen,
+      builder: (context, state) => const ResetPasswordScreen(),
+    ),
   ],
 );
 
@@ -175,4 +180,5 @@ abstract class AppRoutes {
   static const organizationSetupScreen = '/organization_setup';
   static const analyticsScreen = '/analytics';
   static const impactTrackingScreen = '/impact_tracking';
+  static const resetPasswordScreen = '/reset-password';
 }

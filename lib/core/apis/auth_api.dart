@@ -104,4 +104,24 @@ class AuthApi {
       throw AppExceptions('Failed to update FCM token: ${error.toString()}');
     }
   }
+
+  Future<void> resetPassword(String email) async {
+    try {
+      await _client.auth.resetPasswordForEmail(email);
+    } catch (error) {
+      throw AppExceptions(
+          'Failed to send reset password link: ${error.toString()}');
+    }
+  }
+  Future<void> updatePasswordWithToken(String token, String newPassword) async {
+  try {
+    await _client.auth.updateUser(
+      UserAttributes(
+        password: newPassword,
+      ),
+    );
+  } catch (error) {
+    throw AppExceptions('Failed to update password: ${error.toString()}');
+  }
+}
 }

@@ -3,9 +3,14 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:khalti_checkout_flutter/khalti_checkout_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:relief_sphere/app/services/supabase_service.dart';
 
+import '../../../app/services/service_locator.dart';
+import '../../../app/services/stripe_service.dart';
 import '../../../app/utils/logger_utils.dart';
 import '../../../core/model/request_model.dart';
+import '../../../core/notifiers/auth/auth_notifiers.dart';
+import '../../../core/notifiers/profile/profile_notifier.dart';
 import '../../../core/notifiers/request/request_notifier.dart';
 import '../../widgets/custom_image_viewer.dart';
 import '../../widgets/dialogs/dialog_utils.dart';
@@ -25,6 +30,8 @@ class DonateNowScreen extends StatefulWidget {
 class _DonateNowScreenState extends State<DonateNowScreen> {
   final TextEditingController _amountController = TextEditingController();
 
+  final SupabaseService _supabaseService = ServiceLocator.supabase;
+
   bool isPaymentCompleted = false;
   String paymentStatusMessage = '';
   String _selectedAmount = '';
@@ -34,7 +41,7 @@ class _DonateNowScreenState extends State<DonateNowScreen> {
   final List<Map<String, dynamic>> _paymentMethods = [
     {'name': 'Credit Card', 'icon': Icons.credit_card},
     {'name': 'Khalti', 'icon': Icons.wallet},
-    {'name': 'Paypal', 'icon': Icons.paypal},
+    {'name': 'Stripe', 'icon': Icons.payment},
   ];
 
   late final Future<Khalti?> _khalti;
@@ -62,7 +69,6 @@ class _DonateNowScreenState extends State<DonateNowScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Request Summary Card
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -218,10 +224,7 @@ class _DonateNowScreenState extends State<DonateNowScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 24),
-
-              // Amount Input Section
               Text(
                 'Select Amount',
                 style: theme.textTheme.titleMedium?.copyWith(
@@ -278,10 +281,7 @@ class _DonateNowScreenState extends State<DonateNowScreen> {
                   );
                 }).toList(),
               ),
-
               const SizedBox(height: 24),
-
-              // Payment Methods
               Text(
                 'Payment Method',
                 style: theme.textTheme.titleMedium?.copyWith(
@@ -331,10 +331,7 @@ class _DonateNowScreenState extends State<DonateNowScreen> {
                   );
                 }).toList(),
               ),
-
               const SizedBox(height: 24),
-
-              // Terms Checkbox
               CheckboxListTile(
                 value: _acceptTerms,
                 onChanged: (value) {
@@ -346,9 +343,7 @@ class _DonateNowScreenState extends State<DonateNowScreen> {
                 ),
                 controlAffinity: ListTileControlAffinity.leading,
               ),
-
               const SizedBox(height: 24),
-
               FilledButton.icon(
                 onPressed:
                     _acceptTerms ? () => _processDonation(context) : null,
@@ -369,6 +364,7 @@ class _DonateNowScreenState extends State<DonateNowScreen> {
   void initState() {
     super.initState();
     _initializeKhalti();
+    StripeService.initialize();
     WidgetsBinding.instance.addPostFrameCallback((_) {});
   }
 
@@ -444,40 +440,99 @@ class _DonateNowScreenState extends State<DonateNowScreen> {
     }
   }
 
-  void _payWithPaypal() {}
-
   void _processDonation(BuildContext context) async {
     if (_amountController.text.isEmpty || _selectedPaymentMethod.isEmpty) {
       return;
     }
 
     final amount = double.parse(_amountController.text);
-    if (_selectedPaymentMethod.toLowerCase() == 'khalti') {
-      await _payWithKhalti(context);
-    }
-    if (_selectedPaymentMethod == 'paypal') {
-      _payWithPaypal();
-    }
 
-    await context.read<RequestNotifier>().createDonation(
-          requestId: widget.request.id!,
-          amount: amount,
-          paymentMethod: _selectedPaymentMethod,
+    try {
+      if (_selectedPaymentMethod.toLowerCase() == 'khalti') {
+        await _payWithKhalti(context);
+      } else if (_selectedPaymentMethod.toLowerCase() == 'stripe') {
+        await _payWithStripe(context, amount);
+      }
+
+      await context.read<RequestNotifier>().createDonation(
+            requestId: widget.request.id!,
+            amount: amount,
+            paymentMethod: _selectedPaymentMethod,
+          );
+
+      final notifier = context.read<RequestNotifier>().state;
+
+      if (notifier.isSuccess) {
+        DialogUtils.showSuccessDialog(
+          context,
+          onPressed: () => context.pop(),
+          theme: Theme.of(context),
+          message: 'Donation successful',
         );
-
-    final notifier = context.read<RequestNotifier>().state;
-
-    if (notifier.isSuccess) {
-      DialogUtils.showSuccessDialog(context, onPressed: () {
-        context.pop();
-      }, theme: Theme.of(context), message: 'donation created successfully');
-    }
-    if (notifier.isFailure) {
+      }
+    } catch (e) {
       DialogUtils.showFailureDialog(
         context,
         theme: Theme.of(context),
-        title: 'Unable to confirm donation',
-        message: notifier.error,
+        title: 'Payment Failed',
+        message: e.toString(),
+      );
+    }
+  }
+
+  Future<void> _payWithStripe(BuildContext context, double amount) async {
+    try {
+      // Get user email from AuthNotifier
+      final response = await _supabaseService.client.auth.getUser();
+      final user = response.user;
+
+      if (user == null || user.email == null) {
+        DialogUtils.showFailureDialog(
+          context,
+          theme: Theme.of(context),
+          title: 'Authentication Error',
+          message: 'Please login to make a payment',
+        );
+        return;
+      }
+
+      // Initialize payment sheet
+      final paymentResult = await StripeService.initPaymentSheet(
+        email: user.email!,
+        amount: amount,
+      );
+
+      if (paymentResult != null) {
+        // Update payment status
+        setState(() {
+          isPaymentCompleted = true;
+          paymentStatusMessage = 'Payment Successful';
+        });
+
+        // Create donation record
+        await context.read<RequestNotifier>().createDonation(
+              requestId: widget.request.id!,
+              amount: amount,
+              paymentMethod: 'Stripe',
+            );
+
+        if (!mounted) return;
+
+        // Show success dialog
+        DialogUtils.showSuccessDialog(
+          context,
+          theme: Theme.of(context),
+          message: 'Payment successful! Thank you for your donation.',
+          onPressed: () => context.pop(),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      DialogUtils.showFailureDialog(
+        context,
+        theme: Theme.of(context),
+        title: 'Payment Failed',
+        message: e.toString(),
       );
     }
   }

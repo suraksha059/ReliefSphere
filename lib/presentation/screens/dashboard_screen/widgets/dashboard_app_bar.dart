@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:relief_sphere/app/routes/app_routes.dart';
+import 'package:relief_sphere/core/notifiers/notification/notification_notifers.dart';
 import 'package:relief_sphere/core/notifiers/profile/profile_notifier.dart';
 
 import '../../../../core/model/user_model.dart';
@@ -186,37 +187,47 @@ class DashboardSliverAppBar extends StatelessWidget {
                           ),
                         ),
                       ),
-                      Positioned(
-                        right: -5,
-                        top: -5,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.error.withAlpha(230),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: theme.colorScheme.surface,
-                              width: 2,
+                      Consumer<NotificationNotifier>(
+                          builder: (context, notifier, _) {
+                        if (notifier.state.isLoading) {
+                          return const SizedBox();
+                        }
+                        if (notifier.state.notificationsCount < 1) {
+                          return SizedBox();
+                        }
+
+                        return Positioned(
+                          right: -5,
+                          top: -5,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.error.withAlpha(230),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: theme.colorScheme.surface,
+                                width: 2,
+                              ),
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 18,
+                              minHeight: 18,
+                            ),
+                            child: Text(
+                              '${notifier.state.notificationsCount}',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.onError,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
                           ),
-                          constraints: const BoxConstraints(
-                            minWidth: 18,
-                            minHeight: 18,
-                          ),
-                          child: Text(
-                            '1',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.onError,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
+                        );
+                      }),
                     ],
                   ),
                 ],

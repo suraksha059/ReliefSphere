@@ -133,14 +133,6 @@ class RequestApi {
           .single();
 
       final createdRequest = RequestModel.fromJson(response);
-      await _client.functions.invoke(
-        'request-notifications',
-        body: {
-          'type': 'request_created',
-          'requestId': createdRequest.id,
-          'requestedBy': userId,
-        },
-      );
 
       return createdRequest;
     } catch (error) {
@@ -186,19 +178,6 @@ class RequestApi {
       await _client
           .from('requests')
           .update({'status': status.value}).eq('id', id);
-
-      // Prepare notification data
-      final notificationData = {
-        'type': isFreaud ? 'request_rejected' : 'request_approved',
-        'requestId': id.toString(), // Convert to string to ensure serialization
-        'requestedBy': requestData['requested_by'],
-      };
-
-      // Trigger notifications
-      await _client.functions.invoke(
-        'request-notifications',
-        body: notificationData,
-      );
     } catch (e) {
       throw AppExceptions('Failed to verify request: ${e.toString()}');
     }

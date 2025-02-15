@@ -15,4 +15,11 @@ class NotificationNotifier extends BaseNotifier<NotificationState> {
           state.copyWith(notifications: notifications, status: Status.success);
     });
   }
+
+  Future<void> getNotificationsCount() async {
+    await handleAsyncOperation(() async {
+      final notificationsCount = await _notificationApi.getNotificationsCount();
+      state = state.copyWith(notificationsCount: notificationsCount);
+    });
+  }
 }

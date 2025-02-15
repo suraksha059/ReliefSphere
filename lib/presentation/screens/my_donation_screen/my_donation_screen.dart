@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/model/user_model.dart';
+import '../../../core/notifiers/request/request_notifier.dart';
 import '../dashboard_screen/widgets/dashboard_app_bar.dart';
 
 class MyDonationScreen extends StatefulWidget {
@@ -11,8 +13,6 @@ class MyDonationScreen extends StatefulWidget {
 }
 
 class _MyDonationScreenState extends State<MyDonationScreen> {
-  String _selectedFilter = 'All';
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -39,50 +39,24 @@ class _MyDonationScreenState extends State<MyDonationScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: ['All', 'Active', 'Completed'].map((filter) {
-                        final isSelected = _selectedFilter == filter;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: FilterChip(
-                            selected: isSelected,
-                            label: Text(filter),
-                            onSelected: (value) {
-                              setState(() => _selectedFilter = filter);
-                            },
-                            backgroundColor:
-                                theme.colorScheme.surfaceContainerHighest,
-                            selectedColor: theme.colorScheme.primaryContainer,
-                            checkmarkColor: theme.colorScheme.primary,
-                            labelStyle: theme.textTheme.labelLarge?.copyWith(
-                              color: isSelected
-                                  ? theme.colorScheme.primary
-                                  : theme.colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
                 ],
               ),
             ),
           ),
-          SliverPadding(
-            padding: const EdgeInsets.all(16),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: _buildDonationCard(context),
+          Consumer<RequestNotifier>(builder: (context, notifier, child) {
+            return SliverPadding(
+              padding: const EdgeInsets.all(16),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _buildDonationCard(context),
+                  ),
+                  childCount: 5,
                 ),
-                childCount: 5,
               ),
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );

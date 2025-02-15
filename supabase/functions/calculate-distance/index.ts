@@ -1,7 +1,5 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 
-
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -27,9 +25,9 @@ interface RequestBody {
 }
 
 function vincentyDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const a = 6378137.0; // Semi-major axis (meters)
-  const f = 1 / 298.257223563; // Flattening
-  const b = (1 - f) * a; // Semi-minor axis (meters)
+  const a = 6378137.0; 
+  const f = 1 / 298.257223563; 
+  const b = (1 - f) * a; 
 
   const toRadians = (deg: number) => deg * Math.PI / 180;
   const phi1 = toRadians(lat1);
@@ -93,7 +91,6 @@ function vincentyDistance(lat1: number, lon1: number, lat2: number, lon2: number
 }
 
 serve(async (req) => {
-  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }

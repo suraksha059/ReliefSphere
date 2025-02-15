@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:relief_sphere/app/routes/app_routes.dart';
 import 'package:relief_sphere/core/notifiers/home/home_notifier.dart';
+import 'package:relief_sphere/core/notifiers/notification/notification_notifers.dart';
 import 'package:relief_sphere/presentation/screens/dashboard_screen/widgets/dashboard_app_bar.dart';
 
 import '../../../core/model/user_model.dart';
@@ -58,9 +59,23 @@ class DashboardScreen extends StatelessWidget {
                   onViewAll: () {},
                 ),
                 const SizedBox(height: 16),
-                Column(
-                  children: _buildRecentActivity(),
-                ),
+                Consumer<NotificationNotifier>(
+                    builder: (context, notifier, child) {
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemBuilder: (context, index) {
+                      final notification = notifier.state.notifications[index];
+                      return ActivityCard(
+                        title: notification.title,
+                        subtitle: notification.message,
+                        timestamp: notification.timestamp,
+                        icon: Icons.check_circle_outline,
+                      );
+                    },
+                    itemCount: notifier.state.notifications.length,
+                  );
+                }),
               ]),
             ),
           ),
@@ -209,56 +224,6 @@ class DashboardScreen extends StatelessWidget {
         break;
     }
     return actions;
-  }
-
-  List<Widget> _buildRecentActivity() {
-    switch (userRole) {
-      case UserRole.victim:
-        return [
-          ActivityCard(
-            title: 'Request Verified',
-            subtitle: 'Your food aid request has been approved',
-            icon: Icons.check_circle_outline,
-            timestamp: '2h ago',
-          ),
-          ActivityCard(
-            title: 'Aid Received',
-            subtitle: 'Medicine supplies delivered by NGO',
-            icon: Icons.medical_services_outlined,
-            timestamp: '1d ago',
-          ),
-        ];
-      case UserRole.donor:
-        return [
-          ActivityCard(
-            title: 'Donation Success',
-            subtitle: 'Your donation of Rs1000 was processed',
-            icon: Icons.payments_outlined,
-            timestamp: '3h ago',
-          ),
-          ActivityCard(
-            title: 'Impact Update',
-            subtitle: 'Your donation helped 1 family',
-            icon: Icons.favorite_outline,
-            timestamp: '2d ago',
-          ),
-        ];
-      case UserRole.admin:
-        return [
-          ActivityCard(
-            title: 'New Cluster Formed',
-            subtitle: '5 requests  in Panauti',
-            icon: Icons.hub_outlined,
-            timestamp: '1h ago',
-          ),
-          ActivityCard(
-            title: 'Fraud Alert',
-            subtitle: 'Duplicate requests detected',
-            icon: Icons.warning_amber_outlined,
-            timestamp: '5h ago',
-          ),
-        ];
-    }
   }
 
   List<Widget> _buildStatsCards() {

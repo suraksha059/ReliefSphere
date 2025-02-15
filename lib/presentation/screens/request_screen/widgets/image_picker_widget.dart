@@ -61,10 +61,11 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
-              'Tap and hold to rearrange photos',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              'Tap on the image to remove',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
+
             ),
           ),
       ],
