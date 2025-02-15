@@ -1,11 +1,14 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:http/http.dart' as http;
 
 class StripeService {
-  static const String _secretKey = 'sk_test_4eC39HqLyjWDarjtT1zdp7dc';
-  static const String _publishableKey = 'pk_test_TYooMQauvdEDq54NiTphI7jx';
+  static const String _secretKey =
+      'sk_test_51QsnaL2Ly1gSFyxfqmEcJVcgoR84PdWY82RotAi9VXsnHQlLLQCbSYWruJADzKiMo8lgBv3HGxMTn9ZyWCsvHN0A005lvGcKW3';
+  static const String _publishableKey =
+      'pk_test_51QsnaL2Ly1gSFyxfFKJwfdQ7iE5sLNQIKOa0ITeZsE5G2dbg0qzM2yFEb8znAgdTj0v2kxIvjSD7eiMiMM605dVx00ybHaQYi8';
 
   static Future<void> initialize() async {
     Stripe.publishableKey = _publishableKey;

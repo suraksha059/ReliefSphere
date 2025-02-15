@@ -9,8 +9,6 @@ import '../../../app/services/service_locator.dart';
 import '../../../app/services/stripe_service.dart';
 import '../../../app/utils/logger_utils.dart';
 import '../../../core/model/request_model.dart';
-import '../../../core/notifiers/auth/auth_notifiers.dart';
-import '../../../core/notifiers/profile/profile_notifier.dart';
 import '../../../core/notifiers/request/request_notifier.dart';
 import '../../widgets/custom_image_viewer.dart';
 import '../../widgets/dialogs/dialog_utils.dart';
@@ -440,46 +438,6 @@ class _DonateNowScreenState extends State<DonateNowScreen> {
     }
   }
 
-  void _processDonation(BuildContext context) async {
-    if (_amountController.text.isEmpty || _selectedPaymentMethod.isEmpty) {
-      return;
-    }
-
-    final amount = double.parse(_amountController.text);
-
-    try {
-      if (_selectedPaymentMethod.toLowerCase() == 'khalti') {
-        await _payWithKhalti(context);
-      } else if (_selectedPaymentMethod.toLowerCase() == 'stripe') {
-        await _payWithStripe(context, amount);
-      }
-
-      await context.read<RequestNotifier>().createDonation(
-            requestId: widget.request.id!,
-            amount: amount,
-            paymentMethod: _selectedPaymentMethod,
-          );
-
-      final notifier = context.read<RequestNotifier>().state;
-
-      if (notifier.isSuccess) {
-        DialogUtils.showSuccessDialog(
-          context,
-          onPressed: () => context.pop(),
-          theme: Theme.of(context),
-          message: 'Donation successful',
-        );
-      }
-    } catch (e) {
-      DialogUtils.showFailureDialog(
-        context,
-        theme: Theme.of(context),
-        title: 'Payment Failed',
-        message: e.toString(),
-      );
-    }
-  }
-
   Future<void> _payWithStripe(BuildContext context, double amount) async {
     try {
       // Get user email from AuthNotifier
@@ -523,11 +481,54 @@ class _DonateNowScreenState extends State<DonateNowScreen> {
           context,
           theme: Theme.of(context),
           message: 'Payment successful! Thank you for your donation.',
-          onPressed: () => context.pop(),
+          onPressed: () {
+            context.pop();
+            context.pop();
+          },
         );
       }
     } catch (e) {
       if (!mounted) return;
+      DialogUtils.showFailureDialog(
+        context,
+        theme: Theme.of(context),
+        title: 'Payment Failed',
+        message: e.toString(),
+      );
+    }
+  }
+
+  void _processDonation(BuildContext context) async {
+    if (_amountController.text.isEmpty || _selectedPaymentMethod.isEmpty) {
+      return;
+    }
+
+    final amount = double.parse(_amountController.text);
+
+    try {
+      if (_selectedPaymentMethod.toLowerCase() == 'khalti') {
+        await _payWithKhalti(context);
+      } else if (_selectedPaymentMethod.toLowerCase() == 'stripe') {
+        await _payWithStripe(context, amount);
+      }
+
+      await context.read<RequestNotifier>().createDonation(
+            requestId: widget.request.id!,
+            amount: amount,
+            paymentMethod: _selectedPaymentMethod,
+          );
+
+      final notifier = context.read<RequestNotifier>().state;
+
+      if (notifier.isSuccess) {
+        DialogUtils.showSuccessDialog(
+          context,
+          onPressed: () => context.pop(),
+          theme: Theme.of(context),
+          message: 'Donation successful',
+        );
+      }
+    } catch (e) {
       DialogUtils.showFailureDialog(
         context,
         theme: Theme.of(context),
