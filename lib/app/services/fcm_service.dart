@@ -111,14 +111,14 @@ class FCMTokenService {
     });
   }
 
-  /// Update token in storage and server
+
   Future<void> _updateToken(String token) async {
     try {
-      // Update local storage
+
       await _storage.write(key: _tokenKey, value: token);
       _cachedToken = token;
 
-      // Update server
+
       await _authAPI.updateFCMToken(token);
       _logger.i('FCM token updated successfully');
     } catch (e) {
