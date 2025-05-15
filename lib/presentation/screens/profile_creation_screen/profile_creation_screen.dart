@@ -369,7 +369,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
         ),
         const SizedBox(height: 16),
         Text(
-          'We need your location to show you nearby ${_selectedRole == UserRole.donor ? 'requests' : 'donors'}',
+          'We need your location for ${_selectedRole == UserRole.donor ? 'requests' : 'donors'}',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyLarge?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,

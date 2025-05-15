@@ -47,13 +47,17 @@ serve(async (req) => {
 
     let isFraudulent = false
     for (const [victimId, count] of Object.entries(requestCounts)) {
-      if (count > 3) {
+      if (count >= 5) {
         isFraudulent = true
         await supabase
           .from('requests')
           .update({ status: 'rejected' })
           .eq('requested_by', victimId)
+          .eq('status', 'pending')
+
           .gte('created_at', last24Hours)
+          .gt('requested_by', requests[3].id); // Keep first 4 pending
+
       }
     }
 

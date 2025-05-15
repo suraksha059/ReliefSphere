@@ -44,7 +44,7 @@ serve(async (req) => {
 
         if (error) throw error
 
-        const isFraudulent = requests && requests.length > 1
+        const isFraudulent = requests && requests.length > 3;
 
         if (isFraudulent) {
             await supabase

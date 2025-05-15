@@ -34,6 +34,7 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
           children: [
             Text(
               'Add Photos',
+              
               style: Theme.of(context).textTheme.titleLarge,
             ),
             Text(

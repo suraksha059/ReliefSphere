@@ -7,9 +7,11 @@ const corsHeaders = {
 }
 
 interface NotificationRequest {
-  type: 'request_approved' | 'request_rejected';
+  type: 'request_approved' | 'request_rejected' | 'donor_login';
   requestId: string;
   requestedBy: string;
+  donorId?: string;
+
 }
 
 serve(async (req) => {
@@ -27,7 +29,7 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseKey)
 
   try {
-    const { type, requestId, requestedBy } = await req.json() as NotificationRequest
+    const { type, requestId, requestedBy, donorId } = await req.json() as NotificationRequest
 
     switch (type) {
       case 'request_approved':
@@ -70,6 +72,30 @@ serve(async (req) => {
         })
         break;
 
+      case 'donor_login':
+        if (!donorId) throw new Error('Missing donorId for donor_login notification');
+
+        // Count pending requests that need attention
+        const { count, error: countError } = await supabase
+          .from('requests')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'pending');
+
+        if (countError) throw countError;
+
+        // Create welcome notification with pending requests summary
+        await createNotification({
+          profileId: donorId,
+          title: 'Welcome Back',
+          message: count > 0 ?
+            `There are ${count} pending requests that need your help.` :
+            'Thank you for your continued support.',
+          type: 'donor_welcome',
+          data: { pending_count: count.toString() },
+          supabase
+        });
+        break;
+
       default:
         throw new Error('Invalid notification type');
     }
@@ -86,8 +112,8 @@ serve(async (req) => {
 
   } catch (error) {
     return new Response(
-      JSON.stringify({ 
-        error: error.message 
+      JSON.stringify({
+        error: error.message
       }),
       {
         status: 400,

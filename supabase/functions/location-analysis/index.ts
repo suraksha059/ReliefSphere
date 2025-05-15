@@ -23,6 +23,8 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 interface LocationRequest {
   victim_id: string;
+  request_id: string; // Add request_id
+
   lat: number;
   long: number;
 }
@@ -68,7 +70,7 @@ serve(async (req) => {
       )
     }
 
-    const { victim_id, lat, long } = body
+    const { victim_id, request_id, lat, long } = body
 
     // Fetch victim's profile location
     const { data: profile, error: profileError } = await supabase
@@ -79,7 +81,7 @@ serve(async (req) => {
 
     if (profileError || !profile?.lat || !profile?.log) {
       return new Response(
-        JSON.stringify({ error: 'Profile location not found' }),
+        JSON.stringify({ status: 'rejected', error: 'Profile location not found' }),
         {
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
           status: 404
@@ -90,7 +92,7 @@ serve(async (req) => {
     // Calculate distance between profile and request location (in km)
     const distance = calculateDistance(
       profile.lat,
-      profile.long,
+      profile.log,
       lat,
       long
     )
@@ -103,7 +105,7 @@ serve(async (req) => {
       await supabase
         .from('requests')
         .update({ status: 'rejected' })
-        .eq('requested_by', victim_id)
+        .eq('requested_by', request_id)
         .eq('status', 'pending')
     }
 
@@ -115,11 +117,12 @@ serve(async (req) => {
     };
 
     return new Response(
-      JSON.stringify(response),
-      {
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        status: 200
-      }
+      JSON.stringify({
+        status: isFraudulent ? 'rejected' : 'approved',
+        distance,
+        message: `Distance: ${distance.toFixed(2)}km. Max allowed: ${MAX_DISTANCE}km`
+      }),
+      { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 200 }
     )
   } catch (err) {
     console.error(err)

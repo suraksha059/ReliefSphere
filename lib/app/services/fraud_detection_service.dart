@@ -46,7 +46,7 @@ class FraudDetectionService {
 
       final isFrequencyFraud = frequencyResponse.data['isFraudulent'];
       if (isFrequencyFraud) {
-        return true; // Stop checks if frequency fraud detected
+        return true;
       }
 
       // Check 2: Resource Duplication (only if frequency check passes)
@@ -64,7 +64,7 @@ class FraudDetectionService {
 
       final isResourceFraud = resourceResponse.data['status'] == 'rejected';
       if (isResourceFraud) {
-        return true; // Stop checks if resource fraud detected
+        return true;
       }
 
       // Check 3: Location Mismatch (only if previous checks pass)
@@ -84,7 +84,7 @@ class FraudDetectionService {
       final isLocationFraud = locationResponse.data['status'] == 'rejected';
       return isLocationFraud;
     } catch (e) {
-      print('Fraud detection error: $e'); // Log error for debugging
+      print('Fraud detection error: $e');
       throw AppExceptions('Error during fraud detection: $e');
     }
   }
