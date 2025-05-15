@@ -5,6 +5,8 @@ import 'package:relief_sphere/core/model/request_model.dart';
 import 'package:relief_sphere/core/model/user_model.dart';
 import 'package:relief_sphere/core/notifiers/base_notifier.dart';
 
+import '../../../app/exceptions/exceptions.dart';
+import '../../../app/services/fraud_detection_service.dart';
 import '../../../app/services/secure_storage_service.dart';
 import '../../../app/services/service_locator.dart';
 import '../../model/donation_model.dart';
@@ -14,17 +16,26 @@ import 'request_state.dart';
 class RequestNotifier extends BaseNotifier<RequestState> {
   final RequestApi _requestApi = RequestApi();
   final SecureStorageService _secureStorage = ServiceLocator.secureStorage;
+  final FraudDetectionService _fraudService =
+      FraudDetectionService(ServiceLocator.supabase.client);
+
   AddressModel? location;
   DonationModel? donation;
 
   RequestNotifier() : super(const RequestState());
 
   Future<void> getMyRequest() async {
-    await handleAsyncOperation(() async {
+    try {
+      state = state.copyWith(status: Status.loading);
       final userId = await _secureStorage.getUserId();
+      if (userId == null) throw Exception('User not authenticated');
+
       final requests = await _requestApi.getMyRequest(userId);
-      state = state.copyWith(myRequests: requests, status: Status.success);
-    });
+      state = state.copyWith(
+          myRequests: requests, status: Status.success, error: null);
+    } catch (e) {
+      state = state.copyWith(status: Status.error, error: e.toString());
+    }
   }
 
   Future<void> getAllRequest() async {
@@ -35,17 +46,34 @@ class RequestNotifier extends BaseNotifier<RequestState> {
   }
 
   Future<void> sendRequest({required RequestModel request}) async {
-    await handleAsyncOperation(() async {
+    try {
+      state = state.copyWith(status: Status.loading);
+
+      // Validate location
+      if (location == null) {
+        throw AppExceptions('Location is required');
+      }
+
+      // Run fraud checks
+      final isFraudulent = await checkForFraud(request);
+      if (isFraudulent) {
+        throw AppExceptions('Request flagged as potentially fraudulent');
+      }
+
       final newRequest = await _requestApi.sendRequest(
           request: request.copyWith(
               lat: location?.latitude,
               long: location?.longitude,
               address: location?.address));
+
       state = state.copyWith(
-        myRequests: [...state.myRequests, newRequest],
-        status: Status.success,
-      );
-    });
+          myRequests: [...state.myRequests, newRequest],
+          status: Status.success,
+          error: null);
+    } catch (e) {
+      state = state.copyWith(status: Status.error, error: e.toString());
+      rethrow;
+    }
   }
 
   void getDonatedRequest() async {
@@ -97,16 +125,40 @@ class RequestNotifier extends BaseNotifier<RequestState> {
   }
 
   Future<List<String>> uploadRequestImages(List<XFile> images) async {
-    List<String> imageUrls = [];
-
-    await handleAsyncOperation(() async {
-      imageUrls = await _requestApi.uploadImages(images);
-    });
-
-    return imageUrls;
+    try {
+      state = state.copyWith(status: Status.loading);
+      final imageUrls = await _requestApi.uploadImages(images);
+      state = state.copyWith(status: Status.success);
+      return imageUrls;
+    } catch (e) {
+      state = state.copyWith(
+          status: Status.error,
+          error: 'Failed to upload images: ${e.toString()}');
+      return [];
+    }
   }
 
   void setLocation(AddressModel location) {
     this.location = location;
+    notifyListeners();
+  }
+
+  Future<bool> checkForFraud(RequestModel request) async {
+    try {
+      final userId = await _secureStorage.getUserId();
+      if (userId == null) throw AppExceptions('User not authenticated');
+
+      return _fraudService.runFraudChecks(
+        id: userId,
+        latitude: request.lat ?? 0,
+        longitude: request.long ?? 0,
+        resourceType: request.type,
+      );
+    } catch (e) {
+      state = state.copyWith(
+          status: Status.error,
+          error: 'Error during fraud check: ${e.toString()}');
+      return true; // Fail-safe: treat as fraudulent if check fails
+    }
   }
 }

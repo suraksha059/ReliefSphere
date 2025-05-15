@@ -432,23 +432,38 @@ class _RequestScreenState extends State<RequestScreen> {
         return;
       }
 
-      List<String> imageUrls = [];
-      if (_selectedImages.isNotEmpty) {
-        imageUrls = await notifier.uploadRequestImages(_selectedImages);
-      }
-
-      final RequestModel request = RequestModel(
+      final request = RequestModel(
         type: _selectedType,
         urgencyLevel: UrgencyUtils.getUrgencyLevel(_urgencyLevel),
         description: _descriptionController.text.trim(),
         title: _titleController.text.trim(),
-        images: imageUrls,
+        images: [],
         lat: notifier.location?.latitude,
         long: notifier.location?.longitude,
         address: notifier.location?.address,
       );
 
-      await notifier.sendRequest(request: request);
+      // Run fraud detection
+      final isFraudulent = await notifier.checkForFraud(request);
+      if (isFraudulent) {
+        if (!mounted) return;
+        DialogUtils.showFailureDialog(
+          context,
+          theme: theme,
+          title: 'Request Rejected',
+          message: 'Your request has been flagged as potentially fraudulent.',
+        );
+        return;
+      }
+
+      // Continue with image upload and request submission
+      List<String> imageUrls = [];
+      if (_selectedImages.isNotEmpty) {
+        imageUrls = await notifier.uploadRequestImages(_selectedImages);
+      }
+
+      final finalRequest = request.copyWith(images: imageUrls);
+      await notifier.sendRequest(request: finalRequest);
 
       if (!mounted) return;
 

@@ -65,7 +65,6 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
-
             ),
           ),
       ],
